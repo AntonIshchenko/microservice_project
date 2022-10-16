@@ -1,39 +1,58 @@
 package org.example.controller;
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.example.model.SongMetadataModel;
+import org.example.serivice.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
 @RestController
-@RequestMapping(value = "/songs", method = { RequestMethod.DELETE, RequestMethod.GET, RequestMethod.POST})
 public class SongController {
 
+
+   private final SongService songService;
+
    @Autowired
-   public SongController() {}
+   public SongController(SongService songService) {
+      this.songService = songService;
+   }
 
-   @PostMapping(path = "")
+   @ApiResponses(
+         value = {
+               @ApiResponse(code = 200, message = "OK"),
+               @ApiResponse(code = 400, message = "Validation error missing metadata"),
+               @ApiResponse(code = 500, message = "Internal server error occurred.")
+         })
+   @PostMapping(path = "/songs")
    public Integer createNewSong(SongMetadataModel model) {
-      return 0;
+      return songService.createNewSongMetadata(model);
    }
 
-   @GetMapping(path = "/{id}")
+   @ApiResponses(
+         value = {
+               @ApiResponse(code = 200, message = "OK"),
+               @ApiResponse(code = 404, message = "Resource doesn’t exist with given id"),
+               @ApiResponse(code = 500, message = "Internal server error occurred.")
+         })
+   @GetMapping(path = "/songs/{id}")
    public SongMetadataModel getSongMetadata(@PathVariable Long id) {
-      SongMetadataModel model = new SongMetadataModel();
-      model.setResourceId(Integer.parseInt(id.toString()));
-      return model;
+      return songService.getSongMetadata(id);
    }
 
-   @DeleteMapping(path = "")
+   @ApiResponses(
+         value = {
+               @ApiResponse(code = 200, message = "OK"),
+               @ApiResponse(code = 500, message = "Internal server error occurred.")
+         })
+   @DeleteMapping(path = "/songs")
    public List<Long> deleteSongsMetadata(@RequestParam List<Long> id) {
-      return id;
+      return songService.deleteSongMetadata(id);
    }
 }
