@@ -26,7 +26,8 @@ public class SongMetadataModel {
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
    private long id;
-   private Integer yeear;
+   @Column(name = "SONG_YEAR")
+   private Integer year;
    private String name;
    private String artist;
    private String album;
