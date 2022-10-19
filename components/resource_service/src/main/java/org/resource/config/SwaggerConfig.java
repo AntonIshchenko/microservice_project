@@ -3,8 +3,6 @@ package org.resource.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.web.multipart.MultipartResolver;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -25,13 +23,5 @@ public class SwaggerConfig {
             .paths(PathSelectors.any())
             .build();
    }
-
-//   @Bean
-//   public MultipartResolver multipartResolver() {
-//      CommonsMultipartResolver multipartResolver
-//            = new CommonsMultipartResolver();
-//      multipartResolver.setMaxUploadSize(50242880);
-//      return multipartResolver;
-//   }
 
 }
