@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -23,7 +24,11 @@ public class BinaryResourceModel {
 
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
-   private Long resourceId;
-   private String fileName;
-   private Long fileSize;
+   private long resourceId;
+   @Column(name = "SONG_YEAR")
+   private String year;
+   private String name;
+   private String artist;
+   private String album;
+   private String length;
 }

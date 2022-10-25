@@ -38,6 +38,8 @@ dependencies {
     implementation 'org.jboss.resteasy:resteasy-multipart-provider:6.2.0.Final'
     implementation 'org.springframework.data:spring-data-releasetrain:1.4.6.RELEASE'
     implementation 'com.amazonaws:aws-java-sdk:1.12.322'
+    implementation 'org.apache.tika:tika-parsers:1.28.5'
+    implementation 'org.apache.tika:tika-core:2.5.0'
 }
 
 dependencyManagement {

@@ -40,6 +40,7 @@ public class ResourceController {
       if(data.getContentType() == null || MEDIA_TYPE.compareToIgnoreCase(data.getContentType()) !=0 )
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3");
       return resourceService.uploadNewResource(data);
+
    }
 
    @ApiResponses(
