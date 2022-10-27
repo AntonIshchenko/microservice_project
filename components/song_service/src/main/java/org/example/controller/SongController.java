@@ -1,10 +1,14 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.example.model.SongMetadataModel;
 import org.example.serivice.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,15 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class SongController {
 
-
+   private final ObjectMapper objectMapper;
    private final SongService songService;
 
-   @Autowired
-   public SongController(SongService songService) {
-      this.songService = songService;
-   }
+//   @Autowired
+//   public SongController(SongService songService) {
+//      this.songService = songService;
+//   }
 
    @ApiResponses(
          value = {
@@ -57,4 +62,16 @@ public class SongController {
    public List<Long> deleteSongsMetadata(@RequestParam List<Long> id) {
       return songService.deleteSongMetadata(id);
    }
+
+   @SneakyThrows
+   @KafkaListener(id = "entityJSONListener",
+         containerFactory = "jsonEntityConsumerFactory",
+         topics = "song-service.entityJson",
+         groupId = "search.entity-json-consumer")
+   public void handleMessage(String value) {
+      SongMetadataModel model = objectMapper.readValue(value, SongMetadataModel.class);
+      createNewSong(model);
+      System.err.println(value);
+   }
+
 }

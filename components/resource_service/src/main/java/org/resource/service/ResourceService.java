@@ -7,6 +7,9 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -16,6 +19,8 @@ import org.resource.model.BinaryResourceModel;
 import org.resource.repository.UploadedContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
+@RequiredArgsConstructor
 @Service
 public class ResourceService {
 
@@ -40,6 +45,8 @@ public class ResourceService {
    private static final String BUCKET_NAME = "songs-bucket";
 
    private AWSS3Service awsService;
+   private final KafkaTemplate<String, String> kafkaTemplate;
+   private final ObjectMapper objectMapper;
 
    @Autowired
    private UploadedContentRepository uploadedContentRepository;
@@ -53,36 +60,42 @@ public class ResourceService {
             .build();
       awsService = new AWSS3Service(amazonS3);
 
+      clearBucket();
       //creating a bucket
       if (!awsService.doesBucketExist(BUCKET_NAME)) {
          awsService.createBucket(BUCKET_NAME);
       }
    }
 
+   @SneakyThrows
+   @Transactional
    public Long uploadNewResource(MultipartFile data) {
-      InputStream dataStream;
-      try {
-         dataStream = data.getInputStream();
-      } catch (IOException e) {
-         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3", e.getCause());
-      }
+//      InputStream dataStream;
+//      try {
+//         dataStream = data.getInputStream();
+//      } catch (IOException e) {
+//         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3", e.getCause());
+//      }
 
-      BinaryResourceModel resourceModel = retrieveMP3Metadata(data, dataStream);
+      BinaryResourceModel resourceModel = retrieveMP3Metadata(data, data.getInputStream());
       BinaryResourceModel ifExist = uploadedContentRepository.getBinaryResourceModelByName(resourceModel.getName());
-      if(ifExist != null) {
+      if (ifExist != null) {
+         resourceModel.setResourceId(ifExist.getResourceId());
+         sendMessage(resourceModel);
          return ifExist.getResourceId();
       }
 
       BinaryResourceModel model = uploadedContentRepository.save(resourceModel);
 
-      if (!uploadDataToBucket(resourceModel, dataStream)) {
+      if (!uploadDataToBucket(resourceModel, data.getInputStream())) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error occurred.");
       }
+      sendMessage(model);
       return model.getResourceId();
    }
 
    public S3ObjectInputStream getAudioBinaryData(Long id) {
-      BinaryResourceModel model = uploadedContentRepository.getReferenceById(id);
+      BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
       try {
          return getDataFromBucket(model);
       } catch (EntityNotFoundException e) {
@@ -98,6 +111,27 @@ public class ResourceService {
          deleteDataFromBucket(model);
       }
       return id;
+   }
+
+   public ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range) {
+      if (range.size() != 2)
+         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
+
+      int length = range.get(1) - range.get(0);
+      if (length < 0)
+         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
+
+      byte[] result = new byte[length];
+      S3ObjectInputStream audioBinaryData = getAudioBinaryData(id);
+
+      try {
+         audioBinaryData.skip(range.get(0));
+         audioBinaryData.readNBytes(result, 0, length);
+      } catch (IOException e) {
+         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid range");
+      }
+
+      return new ResponseEntity<>(result, HttpStatus.PARTIAL_CONTENT);
    }
 
    private boolean uploadDataToBucket(BinaryResourceModel resourceModel, InputStream data) {
@@ -159,4 +193,12 @@ public class ResourceService {
       awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
       keys.forEach(e -> awsService.deleteObject(BUCKET_NAME, e));
    }
+
+   @SneakyThrows
+   private void sendMessage(BinaryResourceModel model) {
+      var messageKey = model.getClass().getSimpleName() + "|" + model.getName();
+      var messageValue = objectMapper.writeValueAsString(model);
+      kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
+   }
+
 }

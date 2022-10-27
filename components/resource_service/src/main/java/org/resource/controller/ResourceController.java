@@ -36,7 +36,7 @@ public class ResourceController {
                @ApiResponse(code = 500, message = "Internal server error occurred.")
          })
    @PostMapping(path = "/resources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-   public Long uploadNewResource(@RequestPart MultipartFile data) throws IOException {
+   public Long uploadNewResource(@RequestPart MultipartFile data) {
       if(data.getContentType() == null || MEDIA_TYPE.compareToIgnoreCase(data.getContentType()) !=0 )
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3");
       return resourceService.uploadNewResource(data);
@@ -51,12 +51,12 @@ public class ResourceController {
                @ApiResponse(code = 500, message = "Internal server error occurred.")
          })
    @GetMapping(path = "/resources/{id}", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-   public ResponseEntity<byte[]> getAudioBinaryData(@PathVariable Long id, @RequestParam(required = false, defaultValue = "") List<Integer> range) {
+   public byte[] getAudioBinaryData(@PathVariable Long id, @RequestParam(required = false, defaultValue = "") List<Integer> range) {
       if(range != null && !range.isEmpty())
-         return getAudioBinaryDataWithRange(id, range);
+         return resourceService.getAudioBinaryDataWithRange(id, range).getBody();
 
       try {
-         return new ResponseEntity<>(resourceService.getAudioBinaryData(id).readAllBytes(), HttpStatus.OK);
+         return resourceService.getAudioBinaryData(id).readAllBytes();// new ResponseEntity<>(resourceService.getAudioBinaryData(id).readAllBytes(), HttpStatus.OK);
       } catch (IOException e) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error occurred.");
       }
@@ -72,24 +72,4 @@ public class ResourceController {
       return resourceService.deleteSongs(id);
    }
 
-   private ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range) {
-      if(range.size() != 2)
-         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
-
-      int length = range.get(1)-range.get(0);
-      if(length < 0)
-         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
-
-      byte[] result = new byte[length];
-      S3ObjectInputStream audioBinaryData = resourceService.getAudioBinaryData(id);
-
-      try {
-         audioBinaryData.skip(range.get(0));
-         audioBinaryData.readNBytes(result, 0, length);
-      } catch (IOException e) {
-         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid range");
-      }
-
-      return new ResponseEntity<>(result, HttpStatus.PARTIAL_CONTENT);
-   }
 }
