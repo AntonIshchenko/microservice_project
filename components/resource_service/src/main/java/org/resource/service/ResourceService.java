@@ -10,11 +10,6 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.mp3.Mp3Parser;
 import org.resource.model.BinaryResourceModel;
 import org.resource.repository.UploadedContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityNotFoundException;
@@ -60,7 +53,7 @@ public class ResourceService {
             .build();
       awsService = new AWSS3Service(amazonS3);
 
-      clearBucket();
+      clearBucket(); // remove comment to clear bucket
       //creating a bucket
       if (!awsService.doesBucketExist(BUCKET_NAME)) {
          awsService.createBucket(BUCKET_NAME);
@@ -70,15 +63,9 @@ public class ResourceService {
    @SneakyThrows
    @Transactional
    public Long uploadNewResource(MultipartFile data) {
-//      InputStream dataStream;
-//      try {
-//         dataStream = data.getInputStream();
-//      } catch (IOException e) {
-//         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3", e.getCause());
-//      }
 
-      BinaryResourceModel resourceModel = retrieveMP3Metadata(data, data.getInputStream());
-      BinaryResourceModel ifExist = uploadedContentRepository.getBinaryResourceModelByName(resourceModel.getName());
+      BinaryResourceModel resourceModel = new BinaryResourceModel(0, data.getOriginalFilename(), RequestMethod.POST);
+      BinaryResourceModel ifExist = uploadedContentRepository.getBinaryResourceModelByName(data.getOriginalFilename());
       if (ifExist != null) {
          resourceModel.setResourceId(ifExist.getResourceId());
          sendMessage(resourceModel);
@@ -87,7 +74,7 @@ public class ResourceService {
 
       BinaryResourceModel model = uploadedContentRepository.save(resourceModel);
 
-      if (!uploadDataToBucket(resourceModel, data.getInputStream())) {
+      if (!uploadDataToBucket(data.getOriginalFilename(), data.getInputStream())) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error occurred.");
       }
       sendMessage(model);
@@ -95,10 +82,15 @@ public class ResourceService {
    }
 
    public S3ObjectInputStream getAudioBinaryData(Long id) {
-      BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
       try {
-         return getDataFromBucket(model);
-      } catch (EntityNotFoundException e) {
+         BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
+         if (model == null)
+            throw new IOException();
+         S3ObjectInputStream dataFromBucket = getDataFromBucket(model);
+         model.setMethod(RequestMethod.GET);
+         sendMessage(model);
+         return dataFromBucket;
+      } catch (EntityNotFoundException | IOException e) {
          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource doesn’t exist with given id");
       }
    }
@@ -106,10 +98,13 @@ public class ResourceService {
    @Transactional
    public List<Long> deleteSongs(List<Long> id) {
       for (Long e : id) {
-         BinaryResourceModel model = uploadedContentRepository.getReferenceById(e);
-         uploadedContentRepository.deleteById(model.getResourceId());
-         deleteDataFromBucket(model);
+         BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(e);
+         uploadedContentRepository.deleteBinaryResourceModelByResourceId(model.getResourceId());
+         deleteDataFromBucket(model.getName());
+         model.setMethod(RequestMethod.DELETE);
+         sendMessage(model);
       }
+
       return id;
    }
 
@@ -134,14 +129,14 @@ public class ResourceService {
       return new ResponseEntity<>(result, HttpStatus.PARTIAL_CONTENT);
    }
 
-   private boolean uploadDataToBucket(BinaryResourceModel resourceModel, InputStream data) {
+   private boolean uploadDataToBucket(String key, InputStream data) {
       List<String> keys = new ArrayList<>();
 
       awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
-      if (keys.contains(resourceModel.getName())) {
+      if (keys.contains(key)) {
          return true;
       }
-      PutObjectResult putObjectResult = awsService.putObject(BUCKET_NAME, resourceModel.getName(), data);
+      PutObjectResult putObjectResult = awsService.putObject(BUCKET_NAME, key, data);
       return putObjectResult.getETag() != null;
    }
 
@@ -150,48 +145,8 @@ public class ResourceService {
       return s3Object.getObjectContent();
    }
 
-   private void deleteDataFromBucket(BinaryResourceModel resourceModel) {
-      awsService.deleteObject(BUCKET_NAME, resourceModel.getName());
-   }
-
-   private BinaryResourceModel retrieveMP3Metadata(MultipartFile fileData, InputStream data) {
-      BinaryResourceModel resultModel = new BinaryResourceModel();
-
-      ContentHandler handler = new DefaultHandler();
-      Metadata metadata = new Metadata();
-      Parser parser = new Mp3Parser();
-      ParseContext parseCtx = new ParseContext();
-      try {
-         parser.parse(data, handler, metadata, parseCtx);
-      } catch (IOException | SAXException | TikaException e) {
-         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error or request body is an invalid MP3", e.getCause());
-      }
-
-      resultModel.setName(fileData.getOriginalFilename());
-      resultModel.setArtist(metadata.get("xmpDM:artist"));
-      resultModel.setAlbum(metadata.get("xmpDM:album"));
-      resultModel.setYear(metadata.get("xmpDM:releaseDate"));
-
-      double duration = 0;
-      try {
-         duration = Double.parseDouble(metadata.get("xmpDM:duration"));
-      } catch (NumberFormatException | NullPointerException e) {
-         resultModel.setLength("");
-      }
-      resultModel.setLength(convertTrackDuration((int) duration));
-      return resultModel;
-   }
-
-   private String convertTrackDuration(Integer duration) {
-      int minutes = duration / (60);
-      int seconds = duration % 60;
-      return String.format("%d:%02d", minutes, seconds);
-   }
-
-   private void clearBucket() {
-      List<String> keys = new ArrayList<>();
-      awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
-      keys.forEach(e -> awsService.deleteObject(BUCKET_NAME, e));
+   private void deleteDataFromBucket(String key) {
+      awsService.deleteObject(BUCKET_NAME, key);
    }
 
    @SneakyThrows
@@ -199,6 +154,12 @@ public class ResourceService {
       var messageKey = model.getClass().getSimpleName() + "|" + model.getName();
       var messageValue = objectMapper.writeValueAsString(model);
       kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
+   }
+
+   private void clearBucket() {
+      List<String> keys = new ArrayList<>();
+      awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      keys.forEach(e -> awsService.deleteObject(BUCKET_NAME, e));
    }
 
 }

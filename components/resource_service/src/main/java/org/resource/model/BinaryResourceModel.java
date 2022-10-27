@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -26,9 +27,7 @@ public class BinaryResourceModel {
    @GeneratedValue(strategy = GenerationType.AUTO)
    private long resourceId;
    @Column(name = "SONG_YEAR")
-   private String year;
    private String name;
-   private String artist;
-   private String album;
-   private String length;
+   private RequestMethod method;
+
 }

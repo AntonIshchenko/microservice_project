@@ -14,12 +14,13 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.mp3.Mp3Parser;
+import org.example.model.MetadataModeDTO;
+import org.example.model.ResourceServiceMessage;
 import org.example.model.SongMetadataModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -59,29 +60,34 @@ public class ResourceProcessorService {
 
    @SneakyThrows
    @Transactional
-   public void handleSongMetadata(String inputMessage) {
-      SongMetadataModel model = getFileModel(inputMessage);
-
+   public void sendMetadata(ResourceServiceMessage model) {
       S3Object s3Object = awsService.getObject(BUCKET_NAME, model.getName());
       S3ObjectInputStream objectContent = s3Object.getObjectContent();
       InputStream dataStream = new ByteArrayInputStream(objectContent.readAllBytes());
       SongMetadataModel resultModel = retrieveMP3Metadata(model.getName(), dataStream);
       resultModel.setResourceId(model.getResourceId());
-      sendMessage(model);
+      sendMessage(new MetadataModeDTO(model.getMethod(), resultModel));
    }
 
-   private SongMetadataModel getFileModel(String inputJson) {
+   public void deleteMetadata(ResourceServiceMessage model) {
+      SongMetadataModel metadataModel = new SongMetadataModel();
+      metadataModel.setResourceId(model.getResourceId());
+      metadataModel.setName(model.getName());
+      sendMessage(new MetadataModeDTO(model.getMethod(), metadataModel));
+   }
+
+   public ResourceServiceMessage getDTO(String inputJson) {
       try {
-         return objectMapper.readValue(inputJson, SongMetadataModel.class);
+         return objectMapper.readValue(inputJson, ResourceServiceMessage.class);
       } catch (Exception e) {
          System.err.println(e.getMessage());
-         return new SongMetadataModel();
+         return new ResourceServiceMessage();
       }
    }
 
-   @SneakyThrows public void sendMessage(SongMetadataModel model) {
-      var messageKey = model.getClass().getSimpleName() + "|" + model.getId();
-      var messageValue = objectMapper.writeValueAsString(model);
+   @SneakyThrows public void sendMessage(MetadataModeDTO modelDTO) {
+      var messageKey = modelDTO.getClass().getSimpleName() + "|" + modelDTO.getMethod();
+      var messageValue = objectMapper.writeValueAsString(modelDTO);
       kafkaTemplate.send("song-service.entityJson", messageKey, messageValue);
    }
 
