@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 import org.example.model.MetadataModeDTO;
 import org.example.model.SongMetadataModel;
 import org.example.serivice.SongService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -28,11 +26,6 @@ public class SongController {
 
    private final ObjectMapper objectMapper;
    private final SongService songService;
-
-//   @Autowired
-//   public SongController(SongService songService) {
-//      this.songService = songService;
-//   }
 
    @ApiResponses(
          value = {

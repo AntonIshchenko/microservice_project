@@ -15,7 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "BINARY_RESOURCE_IDS")
+@Table(name = "BINARY_RESOURCE_IDS", schema = "resources_data")
 @Builder
 @Setter
 @Getter

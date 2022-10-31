@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.minidev.json.annotate.JsonIgnore;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,7 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "METADATA")
+@Table(name = "songsmetadata", schema = "metadata")
 @Builder
 @Setter
 @Getter
@@ -26,7 +25,7 @@ public class SongMetadataModel {
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
    private long id;
-   @Column(name = "SONG_YEAR")
+   @Column(name = "song_year")
    private String year;
    private String name;
    private String artist;
