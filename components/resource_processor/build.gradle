@@ -37,7 +37,7 @@ dependencies {
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     implementation 'com.h2database:h2:2.1.214'
     implementation 'org.springframework.kafka:spring-kafka'
-//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.jboss.resteasy:resteasy-multipart-provider:6.2.0.Final'
     implementation 'org.springframework.data:spring-data-releasetrain:1.4.6.RELEASE'
     implementation 'com.amazonaws:aws-java-sdk:1.12.322'

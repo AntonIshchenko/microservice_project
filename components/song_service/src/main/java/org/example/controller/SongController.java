@@ -1,6 +1,8 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netflix.appinfo.InstanceInfo;
+import com.netflix.discovery.EurekaClient;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,7 @@ import lombok.SneakyThrows;
 import org.example.model.MetadataModeDTO;
 import org.example.model.SongMetadataModel;
 import org.example.serivice.SongService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +27,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SongController {
 
+   private final EurekaClient eurekaClient;
    private final ObjectMapper objectMapper;
    private final SongService songService;
+
+   @Value("${spring.application.name}")
+   private String appName;
 
    @ApiResponses(
          value = {
@@ -56,6 +63,7 @@ public class SongController {
          })
    @DeleteMapping(path = "/songs", produces = "application/json")
    public List<Long> deleteSongsMetadata(@RequestParam List<Long> id) {
+      getAppName();
       return songService.deleteSongMetadata(id);
    }
 
@@ -73,5 +81,15 @@ public class SongController {
       }
       System.err.println(value);
    }
+
+   private String getAppName() {
+      System.out.println(eurekaClient.getApplication(appName).getName());
+      InstanceInfo instanceInfo = eurekaClient.getApplication(appName).getInstances().get(0);
+      String hostName = instanceInfo.getHostName();
+      int port = instanceInfo.getPort();
+      System.err.println(hostName + " " + port);
+      return appName;
+   }
+
 
 }

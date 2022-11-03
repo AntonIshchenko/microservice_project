@@ -53,7 +53,7 @@ public class ResourceService {
             .build();
       awsService = new AWSS3Service(amazonS3);
 
-      clearBucket(); // remove comment to clear bucket
+//      clearBucket(); // remove comment to clear bucket
       //creating a bucket
       if (!awsService.doesBucketExist(BUCKET_NAME)) {
          awsService.createBucket(BUCKET_NAME);
