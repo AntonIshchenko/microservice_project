@@ -1,8 +1,6 @@
 package org.resource.controller;
 
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import org.resource.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,12 +27,6 @@ public class ResourceController {
    @Autowired
    private ResourceService resourceService;
 
-   @ApiResponses(
-         value = {
-               @ApiResponse(code = 200, message = "OK"),
-               @ApiResponse(code = 400, message = "Validation error or request body is an invalid MP3"),
-               @ApiResponse(code = 500, message = "Internal server error occurred.")
-         })
    @PostMapping(path = "/resources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public Long uploadNewResource(@RequestPart MultipartFile data) {
       if (data.getContentType() == null || MEDIA_TYPE.compareToIgnoreCase(data.getContentType()) != 0)
@@ -42,13 +34,6 @@ public class ResourceController {
       return resourceService.uploadNewResource(data);
    }
 
-   @ApiResponses(
-         value = {
-               @ApiResponse(code = 200, message = "OK"),
-               @ApiResponse(code = 206, message = "Partial content (if range requested)"),
-               @ApiResponse(code = 404, message = "Resource doesn’t exist with given id"),
-               @ApiResponse(code = 500, message = "Internal server error occurred.")
-         })
    @GetMapping(path = "/resources/{id}", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public int getAudioBinaryData(@PathVariable Long id, @RequestParam(required = false, defaultValue = "") List<Integer> range) {
       if (range != null && !range.isEmpty())
@@ -63,11 +48,6 @@ public class ResourceController {
       }
    }
 
-   @ApiResponses(
-         value = {
-               @ApiResponse(code = 200, message = "OK"),
-               @ApiResponse(code = 500, message = "Internal server error occurred.")
-         })
    @DeleteMapping(path = "/resources", produces = "application/json")
    public List<Long> deleteSongs(@RequestParam List<Long> id) {
       return resourceService.deleteSongs(id);

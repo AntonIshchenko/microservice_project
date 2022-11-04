@@ -8,7 +8,6 @@ server.port: 8082
 
 eureka:
   instance:
-    #    hostname: search
     preferIpAddress: true
   client:
     registerWithEureka: true

@@ -1,5 +1,6 @@
 package org.example.serivice;
 
+import lombok.RequiredArgsConstructor;
 import org.example.model.SongMetadataModel;
 import org.example.repository.SongModelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,14 +12,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SongService {
 
-   private final SongModelRepository songModelRepository;
-
-   @Autowired
-   public SongService(SongModelRepository songModelRepository) {
-      this.songModelRepository = songModelRepository;
-   }
+      private final SongModelRepository songModelRepository;
 
    public Integer createNewSongMetadata(SongMetadataModel model) {
       if (model.getResourceId() == null) {

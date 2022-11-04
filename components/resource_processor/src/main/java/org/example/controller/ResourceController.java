@@ -1,7 +1,5 @@
 package org.example.controller;
 
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.example.model.ResourceServiceMessage;
 import org.example.service.ResourceProcessorService;
@@ -18,23 +16,11 @@ public class ResourceController {
 
    private final ResourceProcessorService resourceProcessorService;
 
-   @ApiResponses(
-         value = {
-               @ApiResponse(code = 200, message = "OK"),
-               @ApiResponse(code = 400, message = "Validation error missing metadata"),
-               @ApiResponse(code = 500, message = "Internal server error occurred.")
-         })
    @PostMapping(path = "/sendMetadata", consumes = "application/json", produces = "application/json")
    public void sendMetadata(@RequestBody ResourceServiceMessage model) {
       resourceProcessorService.sendMetadata(model);
    }
 
-   @ApiResponses(
-         value = {
-               @ApiResponse(code = 200, message = "OK"),
-               @ApiResponse(code = 400, message = "Validation error missing metadata"),
-               @ApiResponse(code = 500, message = "Internal server error occurred.")
-         })
    @DeleteMapping(path = "/sendMetadata", consumes = "application/json")
    public void deleteMetadata(@RequestBody ResourceServiceMessage model) {
       resourceProcessorService.deleteMetadata(model);

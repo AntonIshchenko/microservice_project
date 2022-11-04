@@ -10,4 +10,5 @@ public interface SongModelRepository extends JpaRepository<SongMetadataModel, Lo
    SongMetadataModel findSongMetadataModelByResourceId(Long id);
 
    void deleteByResourceId(Long resourceId);
+
 }

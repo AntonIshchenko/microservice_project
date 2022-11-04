@@ -1,7 +1,7 @@
 package org.example.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CopyObjectResult;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
@@ -18,8 +18,7 @@ public class AWSS3Service {
    private final AmazonS3 s3client;
 
    public AWSS3Service() {
-      this(new AmazonS3Client() {
-      });
+      this(AmazonS3ClientBuilder.defaultClient());
    }
 
    public AWSS3Service(AmazonS3 s3client) {
