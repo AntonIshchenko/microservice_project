@@ -1,8 +1,8 @@
 package org.resource.controller;
 
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import lombok.RequiredArgsConstructor;
 import org.resource.service.ResourceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,11 +20,11 @@ import java.util.List;
 import java.util.Objects;
 
 @RestController
+@RequiredArgsConstructor
 public class ResourceController {
 
    private static final String MEDIA_TYPE = "audio/mpeg";
 
-   @Autowired
    private ResourceService resourceService;
 
    @PostMapping(path = "/resources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

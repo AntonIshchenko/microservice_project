@@ -17,6 +17,7 @@ import org.apache.tika.parser.mp3.Mp3Parser;
 import org.example.model.MetadataModeDTO;
 import org.example.model.ResourceServiceMessage;
 import org.example.model.SongMetadataModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -35,9 +36,12 @@ import java.io.InputStream;
 @Service
 public class ResourceProcessorService {
 
-   private static final String STORAGE_URL = "http://localhost:4566";
    private static final String STORAGE_REGION = Regions.US_EAST_1.getName();
-   private static final String BUCKET_NAME = "songs-bucket";
+
+   @Value("${s3.storage.url}")
+   private String storageUrl;
+   @Value("${s3.storage.bucket.name}")
+   private String bucketName;
 
    private final KafkaTemplate<String, String> kafkaTemplate;
    private final ObjectMapper objectMapper;
@@ -47,21 +51,21 @@ public class ResourceProcessorService {
    private void initializeAWSS3Storage() {
       AmazonS3 amazonS3 = AmazonS3ClientBuilder
             .standard()
-            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(STORAGE_URL, STORAGE_REGION))
+            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(storageUrl, STORAGE_REGION))
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
 
       //creating a bucket
-      if (!awsService.doesBucketExist(BUCKET_NAME)) {
-         awsService.createBucket(BUCKET_NAME);
+      if (!awsService.doesBucketExist(bucketName)) {
+         awsService.createBucket(bucketName);
       }
    }
 
    @SneakyThrows
    @Transactional
    public void sendMetadata(ResourceServiceMessage model) {
-      S3Object s3Object = awsService.getObject(BUCKET_NAME, model.getName());
+      S3Object s3Object = awsService.getObject(bucketName, model.getName());
       S3ObjectInputStream objectContent = s3Object.getObjectContent();
       InputStream dataStream = new ByteArrayInputStream(objectContent.readAllBytes());
       SongMetadataModel resultModel = retrieveMP3Metadata(model.getName(), dataStream);

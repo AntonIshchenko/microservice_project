@@ -10,4 +10,5 @@ public interface UploadedContentRepository extends JpaRepository<BinaryResourceM
    BinaryResourceModel getBinaryResourceModelByResourceId(Long name);
 
    void deleteBinaryResourceModelByResourceId(Long id);
+
 }

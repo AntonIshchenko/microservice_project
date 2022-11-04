@@ -13,6 +13,7 @@ import lombok.SneakyThrows;
 import org.resource.model.BinaryResourceModel;
 import org.resource.repository.UploadedContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -33,9 +34,12 @@ import java.util.List;
 @Service
 public class ResourceService {
 
-   private static final String STORAGE_URL = "http://localhost:4566";
    private static final String STORAGE_REGION = Regions.US_EAST_1.getName();
-   private static final String BUCKET_NAME = "songs-bucket";
+
+   @Value("${s3.storage.url}")
+   private String storageUrl;
+   @Value("${s3.storage.bucket.name}")
+   private String bucketName;
 
    private AWSS3Service awsService;
    private final KafkaTemplate<String, String> kafkaTemplate;
@@ -48,15 +52,15 @@ public class ResourceService {
    private void initializeAWSS3Storage() {
       AmazonS3 amazonS3 = AmazonS3ClientBuilder
             .standard()
-            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(STORAGE_URL, STORAGE_REGION))
+            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(storageUrl, STORAGE_REGION))
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
 
-//      clearBucket(); // remove comment to clear bucket
+      //      clearBucket(); // remove comment to clear bucket
       //creating a bucket
-      if (!awsService.doesBucketExist(BUCKET_NAME)) {
-         awsService.createBucket(BUCKET_NAME);
+      if (!awsService.doesBucketExist(bucketName)) {
+         awsService.createBucket(bucketName);
       }
    }
 
@@ -132,21 +136,21 @@ public class ResourceService {
    private boolean uploadDataToBucket(String key, InputStream data) {
       List<String> keys = new ArrayList<>();
 
-      awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      awsService.listObjects(bucketName).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
       if (keys.contains(key)) {
          return true;
       }
-      PutObjectResult putObjectResult = awsService.putObject(BUCKET_NAME, key, data);
+      PutObjectResult putObjectResult = awsService.putObject(bucketName, key, data);
       return putObjectResult.getETag() != null;
    }
 
    private S3ObjectInputStream getDataFromBucket(BinaryResourceModel resourceModel) {
-      S3Object s3Object = awsService.getObject(BUCKET_NAME, resourceModel.getName());
+      S3Object s3Object = awsService.getObject(bucketName, resourceModel.getName());
       return s3Object.getObjectContent();
    }
 
    private void deleteDataFromBucket(String key) {
-      awsService.deleteObject(BUCKET_NAME, key);
+      awsService.deleteObject(bucketName, key);
    }
 
    @SneakyThrows
@@ -158,8 +162,8 @@ public class ResourceService {
 
    private void clearBucket() {
       List<String> keys = new ArrayList<>();
-      awsService.listObjects(BUCKET_NAME).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
-      keys.forEach(e -> awsService.deleteObject(BUCKET_NAME, e));
+      awsService.listObjects(bucketName).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      keys.forEach(e -> awsService.deleteObject(bucketName, e));
    }
 
 }

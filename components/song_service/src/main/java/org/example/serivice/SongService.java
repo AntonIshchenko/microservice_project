@@ -3,7 +3,6 @@ package org.example.serivice;
 import lombok.RequiredArgsConstructor;
 import org.example.model.SongMetadataModel;
 import org.example.repository.SongModelRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SongService {
 
-      private final SongModelRepository songModelRepository;
+   private final SongModelRepository songModelRepository;
 
    public Integer createNewSongMetadata(SongMetadataModel model) {
       if (model.getResourceId() == null) {
@@ -27,7 +26,7 @@ public class SongService {
 
    public SongMetadataModel getSongMetadata(Long id) {
       SongMetadataModel metadataModel = songModelRepository.findSongMetadataModelByResourceId(id);
-      if(metadataModel == null) {
+      if (metadataModel == null) {
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error missing metadata");
       }
       return metadataModel;
@@ -37,7 +36,7 @@ public class SongService {
    public List<Long> deleteSongMetadata(List<Long> id) {
       for (Long e : id) {
          SongMetadataModel model = songModelRepository.findSongMetadataModelByResourceId(e);
-         if(model == null) {
+         if (model == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error missing metadata");
          }
          songModelRepository.deleteById(model.getId());
