@@ -16,12 +16,12 @@ public class SongService {
 
    private final SongModelRepository songModelRepository;
 
-   public Integer createNewSongMetadata(SongMetadataModel model) {
+   public Long createNewSongMetadata(SongMetadataModel model) {
       if (model.getResourceId() == null) {
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error missing metadata");
       }
       songModelRepository.save(model);
-      return Integer.parseInt(model.getResourceId().toString());
+      return model.getResourceId();
    }
 
    public SongMetadataModel getSongMetadata(Long id) {

@@ -89,9 +89,10 @@ public class ResourceProcessorService {
       }
    }
 
-   @SneakyThrows public void sendMessage(MetadataModeDTO modelDTO) {
-      var messageKey = modelDTO.getClass().getSimpleName() + "|" + modelDTO.getMethod();
-      var messageValue = objectMapper.writeValueAsString(modelDTO);
+   @SneakyThrows
+   public void sendMessage(MetadataModeDTO modelDTO) {
+      String messageKey = modelDTO.getClass().getSimpleName() + "|" + modelDTO.getMethod();
+      String messageValue = objectMapper.writeValueAsString(modelDTO);
       kafkaTemplate.send("song-service.entityJson", messageKey, messageValue);
    }
 

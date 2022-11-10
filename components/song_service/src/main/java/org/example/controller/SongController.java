@@ -26,7 +26,7 @@ public class SongController {
    private final SongService songService;
 
    @PostMapping(path = "/songs", consumes = "application/json", produces = "application/json")
-   public Integer createNewSong(@RequestBody SongMetadataModel model) {
+   public Long createNewSong(@RequestBody SongMetadataModel model) {
       return songService.createNewSongMetadata(model);
    }
 

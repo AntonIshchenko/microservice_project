@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.persistence.Column;
@@ -30,4 +32,21 @@ public class BinaryResourceModel {
    private String name;
    private RequestMethod method;
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+
+      if (!(o instanceof BinaryResourceModel))
+         return false;
+
+      BinaryResourceModel that = (BinaryResourceModel) o;
+
+      return new EqualsBuilder().append(resourceId, that.resourceId).append(name, that.name).isEquals();
+   }
+
+   @Override
+   public int hashCode() {
+      return new HashCodeBuilder(17, 37).append(resourceId).append(name).toHashCode();
+   }
 }
