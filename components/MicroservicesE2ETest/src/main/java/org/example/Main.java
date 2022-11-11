@@ -12,8 +12,12 @@ public class Main {
       context.register(ApplicationConfig.class);
       context.refresh();
       E2ETestLauncher bean = context.getBean(E2ETestLauncher.class);
-      bean.runTest();
-      System.out.println("test completed");
+      try {
+         bean.runTest();
+      } catch (Exception e){
+         System.err.println("Test failed!");
+      }
+      System.out.println("test completed!");
 
    }
 }

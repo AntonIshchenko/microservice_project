@@ -24,7 +24,7 @@ public class E2ETestLauncher {
    public E2ETestLauncher() {
    }
 
-   public void runTest() throws IOException {
+   public void runTest() throws Exception {
       File file = new File(getClass().getClassLoader().getResource("testSong.mp3").getFile());
       FileBody fileBody = new FileBody(file, MEDIA_TYPE);
       HttpEntity entity = MultipartEntityBuilder.create()
@@ -59,9 +59,11 @@ public class E2ETestLauncher {
 
       byte[] deleteResponseData = deleteResponse.getEntity().getContent().readAllBytes();
       String deleteResponseResult = new String(deleteResponseData, StandardCharsets.UTF_8);
-      System.err.println(new String(deleteResponseData, StandardCharsets.UTF_8));
+      System.err.println(deleteResponseResult);
 
-      //      assertTrue(deleteResponseResult.contains(postResponseResult));
+      if(!deleteResponseResult.contains(postResponseResult)) {
+         throw new Exception("Test Failed");
+      }
 
    }
 }
