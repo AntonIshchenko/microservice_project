@@ -19,22 +19,20 @@ services:
           - eureka-server
           
   postgres:
-    container_name: microservices-db
+    container_name: postgres
     image: postgres
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
-#   volumes:
-#      - postgres:/data/postgres
     ports:
       - "5432:5432"
-    restart: unless-stopped
     networks:
       microservice-net:
         aliases:
-          - microservices-db
-
+          - postgres
+    restart: unless-stopped
+    
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
     container_name: zookeeper
@@ -150,6 +148,27 @@ services:
       microservice-net:
         aliases:
           - song-service
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+
+  resource-processor:
+    build:
+      context: ./resource-processor
+    hostname: resource-processor
+    environment:
+      - SPRING_APPLICATION_NAME=sresource-processor
+      - SPRING_PROFILES_ACTIVE=development
+    command: ["java", "-jar", "/resource_processor-1.0-SNAPSHOT.jar"]
+    #restart: on-failure
+    ports:
+      - "8082:8082"
+    networks:
+      microservice-net:
+        aliases:
+          - resource_processor
     depends_on:
       eureka-server:
         condition: service_started

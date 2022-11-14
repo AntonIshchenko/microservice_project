@@ -67,7 +67,7 @@ public class ResourceProcessorService {
    public void sendMetadata(ResourceServiceMessage model) {
       S3Object s3Object = awsService.getObject(bucketName, model.getName());
       S3ObjectInputStream objectContent = s3Object.getObjectContent();
-      InputStream dataStream = new ByteArrayInputStream(objectContent.readAllBytes());
+      InputStream dataStream = objectContent.getDelegateStream();
       SongMetadataModel resultModel = retrieveMP3Metadata(model.getName(), dataStream);
       resultModel.setResourceId(model.getResourceId());
       sendMessage(new MetadataModeDTO(model.getMethod(), resultModel));

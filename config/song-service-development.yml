@@ -2,7 +2,7 @@ spring:
   application.name: song-service
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: broker:9092
 
 server.port: 8081
 
