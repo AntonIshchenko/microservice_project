@@ -21,7 +21,7 @@ public class ProducerMessageConfig {
 
    @Bean
    public ProducerFactory<String, String> producerFactory() {
-      var settings = new LinkedHashMap<String, Object>();
+      LinkedHashMap<String, Object> settings = new LinkedHashMap<String, Object>();
       settings.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
       settings.put(ProducerConfig.ACKS_CONFIG, "all");
       settings.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");

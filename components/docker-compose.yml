@@ -1,0 +1,162 @@
+version: '3.5'
+services:
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+    hostname: eureka-server
+    environment:
+      - SPRING_APPLICATION_NAME=eureka-server
+      - SPRING_PROFILES_ACTIVE=development
+    command: ["java", "-jar", "/eureka-server-0.0.1-SNAPSHOT.jar"]
+    expose:
+      - "8761"
+    ports:
+      - "8761:8761"
+    networks:
+      microservice-net:
+        aliases:
+          - eureka-server
+          
+  postgres:
+    container_name: microservices-db
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+#   volumes:
+#      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      microservice-net:
+        aliases:
+          - microservices-db
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      microservice-net:
+        aliases:
+          - zookeeper
+
+  broker:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: broker
+    ports:
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      microservice-net:
+        aliases:
+          - broker
+          
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - SERVICES=lambda,s3
+    ports:
+      - '4566-4583:4566-4583'
+    volumes:
+      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      microservice-net:
+        aliases:
+          - localstack
+
+  config-server:
+    build:
+      context: ./config-server
+    hostname: config-server
+    environment: 
+      - SPRING_APPLICATION_NAME=config-server
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/AntonIshchenko/microservice_cource.git
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS=config/
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL=true
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START=true
+    command: ["java", "-jar", "/config-server-0.0.1-SNAPSHOT.jar"]
+    expose: 
+      - "8090"
+    ports:
+      - "8090:8090"
+    networks:
+      microservice-net:
+        aliases:
+          - config-server
+    depends_on:
+      - eureka-server
+    healthcheck:
+      test: curl --fail http://config-server:8090/api-getaway/development || exit 1
+      interval: 30s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
+      
+  api-gateway:
+    build:
+      context: ./api-getaway
+    hostname: api-gateway
+    environment:
+      - SPRING_APPLICATION_NAME=api-gateway
+      - SPRING_PROFILES_ACTIVE=development
+    command: ["java", "-jar", "/API-Getaway-0.0.1-SNAPSHOT.jar"]
+    restart: on-failure
+    ports:
+      - "8888:8888"
+    networks:
+      microservice-net:
+        aliases:
+          - api-gateway
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+
+
+  song-service:
+    build:
+      context: ./song_service
+    hostname: song-service
+    environment:
+      - SPRING_APPLICATION_NAME=song-service
+      - SPRING_PROFILES_ACTIVE=development
+    command: ["java", "-jar", "/song_service-1.0-SNAPSHOT.jar"]
+    #restart: on-failure
+    ports:
+      - "8081:8081"
+    networks:
+      microservice-net:
+        aliases:
+          - song-service
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+
+networks:
+  microservice-net:
+    name: microservice-net
+    driver: bridge

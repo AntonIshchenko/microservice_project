@@ -17,3 +17,17 @@ server:
 management:
   security:
     enabled: false
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    metadata-map:
+      zone: zone1
+  client:
+    prefer-same-zone-eureka: true
+    register-with-eureka: true
+    region: region1
+    service-url:
+      zone1: http://eureka-server:8761/eureka/
+    availability-zones:
+      region1: zone1
