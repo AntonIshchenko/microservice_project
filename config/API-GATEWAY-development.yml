@@ -3,20 +3,20 @@ server:
 
 spring:
   application:
-    name: API-GATEWAY
+    name: api-gateway
 
 cloud:
   gateway:
     routes:
-      - id: RESOURCE-SERVICE
+      - id: resource-service
         uri:
-          lb://RESOURCE-SERVICE
+          lb://resource-service
         predicates:
           - Path=/resources/**
 
-      - id: SONG-SERVICE
+      - id: song-service
         uri:
-          lb://SONG-SERVICE
+          lb://song-service
         predicates:
           - Path=/songs/**
 
