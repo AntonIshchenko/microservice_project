@@ -5,18 +5,31 @@ spring:
   application:
     name: API-GATEWAY
 
-  cloud:
-    gateway:
-      routes:
-        - id: RESOURCE-SERVICE
-          uri:
-            lb://RESOURCE-SERVICE
-          predicates:
-            - Path=/resources/**
+cloud:
+  gateway:
+    routes:
+      - id: RESOURCE-SERVICE
+        uri:
+          lb://RESOURCE-SERVICE
+        predicates:
+          - Path=/resources/**
 
-        - id: SONG-SERVICE
-          uri:
-            lb://SONG-SERVICE
-          predicates:
-            - Path=/songs/**
+      - id: SONG-SERVICE
+        uri:
+          lb://SONG-SERVICE
+        predicates:
+          - Path=/songs/**
 
+eureka:
+  instance:
+    prefer-ip-address: true
+    metadata-map:
+      zone: zone1
+  client:
+    prefer-same-zone-eureka: true
+    register-with-eureka: true
+    region: region1
+    service-url:
+      zone1: http://eureka-server:8761/eureka/
+    availability-zones:
+      region1: zone1
