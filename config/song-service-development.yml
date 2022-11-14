@@ -1,0 +1,23 @@
+spring:
+  application.name: song-service
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server.port: 8081
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    metadata-map:
+      zone: zone1
+  client:
+    prefer-same-zone-eureka: true
+    register-with-eureka: true
+    region: region1
+    service-url:
+      zone1: http://eureka-server:8761/eureka/
+    availability-zones:
+      region1: zone1
+
+management.endpoints.web.exposure.include: '*'
