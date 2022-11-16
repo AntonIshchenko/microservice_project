@@ -125,7 +125,7 @@ public class ResourceService {
 
       try {
          audioBinaryData.skip(range.get(0));
-         audioBinaryData.readNBytes(result, 0, length);
+         audioBinaryData.read(result, 0, length);
       } catch (IOException e) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid range");
       }
@@ -155,8 +155,8 @@ public class ResourceService {
 
    @SneakyThrows
    private void sendMessage(BinaryResourceModel model) {
-      var messageKey = model.getClass().getSimpleName() + "|" + model.getName();
-      var messageValue = objectMapper.writeValueAsString(model);
+      String messageKey = model.getClass().getSimpleName() + "|" + model.getName();
+      String messageValue = objectMapper.writeValueAsString(model);
       kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
    }
 

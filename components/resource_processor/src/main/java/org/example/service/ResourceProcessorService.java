@@ -1,9 +1,12 @@
 package org.example.service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,17 +23,21 @@ import org.example.model.SongMetadataModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.server.ResponseStatusException;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @Service
@@ -52,6 +59,7 @@ public class ResourceProcessorService {
       AmazonS3 amazonS3 = AmazonS3ClientBuilder
             .standard()
             .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(storageUrl, STORAGE_REGION))
+            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("awsAccessKey", "awsSecretKey")))
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
@@ -60,6 +68,22 @@ public class ResourceProcessorService {
       if (!awsService.doesBucketExist(bucketName)) {
          awsService.createBucket(bucketName);
       }
+   }
+
+   public String echo() {
+      String result = storageUrl + "\n" + bucketName + "\n";
+      List<Bucket> buckets = awsService.listBuckets();
+      for (Bucket bucket : buckets) {
+         result += bucket.getName() + "\n";
+      }
+      ListenableFuture<SendResult<String, String>> sendResultListenableFuture = sendMessage(new MetadataModeDTO(RequestMethod.POST, new SongMetadataModel()));
+      try {
+         result += sendResultListenableFuture.get().getProducerRecord().value();
+      } catch (InterruptedException | ExecutionException e) {
+         System.err.println(e.getMessage());
+      }
+
+      return result;
    }
 
    @SneakyThrows
@@ -90,10 +114,10 @@ public class ResourceProcessorService {
    }
 
    @SneakyThrows
-   public void sendMessage(MetadataModeDTO modelDTO) {
+   public ListenableFuture<SendResult<String, String>> sendMessage(MetadataModeDTO modelDTO) {
       String messageKey = modelDTO.getClass().getSimpleName() + "|" + modelDTO.getMethod();
       String messageValue = objectMapper.writeValueAsString(modelDTO);
-      kafkaTemplate.send("song-service.entityJson", messageKey, messageValue);
+      return kafkaTemplate.send("song-service.entityJson", messageKey, messageValue);
    }
 
    private SongMetadataModel retrieveMP3Metadata(String fileName, InputStream data) {

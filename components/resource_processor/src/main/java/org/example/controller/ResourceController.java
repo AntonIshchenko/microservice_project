@@ -5,6 +5,7 @@ import org.example.model.ResourceServiceMessage;
 import org.example.service.ResourceProcessorService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -24,6 +25,11 @@ public class ResourceController {
    @DeleteMapping(path = "/sendMetadata", consumes = "application/json")
    public void deleteMetadata(@RequestBody ResourceServiceMessage model) {
       resourceProcessorService.deleteMetadata(model);
+   }
+
+   @GetMapping(path = "/echo", produces = "application/json")
+   public String echo() {
+      return resourceProcessorService.echo();
    }
 
    @KafkaListener(id = "entityJSONListener",

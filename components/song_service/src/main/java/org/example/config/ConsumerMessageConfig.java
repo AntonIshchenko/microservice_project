@@ -31,7 +31,7 @@ public class ConsumerMessageConfig {
    @Bean
    public ConcurrentKafkaListenerContainerFactory<String, String> idEntityConsumerFactory() {
       ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
-      LinkedHashMap<String, Object>  settings = new LinkedHashMap<String, Object>();
+      LinkedHashMap<String, Object> settings = new LinkedHashMap<String, Object>();
       settings.put(BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
       settings.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
       settings.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);

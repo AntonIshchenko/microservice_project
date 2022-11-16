@@ -18,20 +18,34 @@ services:
         aliases:
           - eureka-server
           
-  postgres:
-    container_name: postgres
+  metadata:
+    container_name: postgres-metadata
     image: postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      PGDATA: /data/postgres
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=metadata
+      - PGDATA=/data/postgres
     ports:
       - "5432:5432"
     networks:
       microservice-net:
         aliases:
-          - postgres
-    restart: unless-stopped
+          - metadata
+          
+  resources:
+    container_name: postgres-resources
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/data/postgres
+    ports:
+      - "5433:5433"
+    networks:
+      microservice-net:
+        aliases:
+          - resources
     
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
@@ -57,7 +71,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -81,6 +95,12 @@ services:
       microservice-net:
         aliases:
           - localstack
+    healthcheck:
+      test: curl --fail http://localstack:4566 || exit 1
+      interval: 30s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
 
   config-server:
     build:
@@ -141,7 +161,6 @@ services:
       - SPRING_APPLICATION_NAME=song-service
       - SPRING_PROFILES_ACTIVE=development
     command: ["java", "-jar", "/song_service-1.0-SNAPSHOT.jar"]
-    #restart: on-failure
     ports:
       - "8081:8081"
     networks:
@@ -153,16 +172,39 @@ services:
         condition: service_started
       config-server:
         condition: service_healthy
+    #restart: on-failure
+    
+  resource-service:
+    build:
+      context: ./resource_service
+    hostname: resource-service
+    environment:
+      - SPRING_APPLICATION_NAME=resource-service
+      - SPRING_PROFILES_ACTIVE=development
+    command: ["java", "-jar", "/resource_service-1.0-SNAPSHOT.jar"]
+    ports:
+      - "8080:8080"
+    networks:
+      microservice-net:
+        aliases:
+          - resource-service
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    #restart: on-failure
 
   resource-processor:
     build:
-      context: ./resource-processor
+      context: ./resource_processor
     hostname: resource-processor
     environment:
-      - SPRING_APPLICATION_NAME=sresource-processor
+      - SPRING_APPLICATION_NAME=resource-processor
       - SPRING_PROFILES_ACTIVE=development
     command: ["java", "-jar", "/resource_processor-1.0-SNAPSHOT.jar"]
-    #restart: on-failure
     ports:
       - "8082:8082"
     networks:
@@ -173,6 +215,8 @@ services:
       eureka-server:
         condition: service_started
       config-server:
+        condition: service_healthy
+      localstack:
         condition: service_healthy
 
 networks:

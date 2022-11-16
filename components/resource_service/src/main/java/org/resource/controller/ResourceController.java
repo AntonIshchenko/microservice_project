@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+import static org.apache.commons.io.IOUtils.toByteArray;
+
 @RestController
 @RequiredArgsConstructor
 public class ResourceController {
@@ -43,7 +45,7 @@ public class ResourceController {
 
       try {
          S3ObjectInputStream audioBinaryData = resourceService.getAudioBinaryData(id);
-         byte[] bytes = audioBinaryData.readAllBytes();
+         byte[] bytes = toByteArray(audioBinaryData.getDelegateStream());
          return bytes.length;
       } catch (IOException e) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error occurred.");

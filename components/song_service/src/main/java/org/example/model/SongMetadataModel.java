@@ -16,7 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "songsmetadata", schema = "metadata")
+@Table(name = "songsmetadata")
 @Builder
 @Setter
 @Getter
