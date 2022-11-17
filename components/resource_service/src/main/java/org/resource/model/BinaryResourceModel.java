@@ -28,7 +28,6 @@ public class BinaryResourceModel {
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
    private long resourceId;
-   @Column(name = "SONG_YEAR")
    private String name;
    private RequestMethod method;
 

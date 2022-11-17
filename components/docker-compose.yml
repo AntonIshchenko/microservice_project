@@ -5,9 +5,6 @@ services:
     build:
       context: ./eureka-server
     hostname: eureka-server
-    environment:
-      - SPRING_APPLICATION_NAME=eureka-server
-      - SPRING_PROFILES_ACTIVE=development
     command: ["java", "-jar", "/eureka-server-0.0.1-SNAPSHOT.jar"]
     expose:
       - "8761"
@@ -27,7 +24,7 @@ services:
       - POSTGRES_DB=metadata
       - PGDATA=/data/postgres
     ports:
-      - "5432:5432"
+      - "5455:5432"
     networks:
       microservice-net:
         aliases:
@@ -39,9 +36,10 @@ services:
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=resources
       - PGDATA=/data/postgres
     ports:
-      - "5433:5433"
+      - "5444:5432"
     networks:
       microservice-net:
         aliases:
@@ -62,8 +60,6 @@ services:
     image: confluentinc/cp-kafka:7.0.1
     container_name: broker
     ports:
-      # To learn about configuring Kafka for access across networks see
-      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
       - "9092:9092"
     depends_on:
       - zookeeper
@@ -107,8 +103,6 @@ services:
       context: ./config-server
     hostname: config-server
     environment: 
-      - SPRING_APPLICATION_NAME=config-server
-      - SPRING_PROFILES_ACTIVE=dev
       - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/AntonIshchenko/microservice_cource.git
       - SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS=config/
       - SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL=true
@@ -125,7 +119,7 @@ services:
     depends_on:
       - eureka-server
     healthcheck:
-      test: curl --fail http://config-server:8090/api-getaway/development || exit 1
+      test: curl --fail http://config-server:8090/api-gateway/development || exit 1
       interval: 30s
       retries: 3
       start_period: 20s
@@ -133,13 +127,12 @@ services:
       
   api-gateway:
     build:
-      context: ./api-getaway
+      context: ./api-gateway
     hostname: api-gateway
-    environment:
-      - SPRING_APPLICATION_NAME=api-gateway
-      - SPRING_PROFILES_ACTIVE=development
-    command: ["java", "-jar", "/API-Getaway-0.0.1-SNAPSHOT.jar"]
+    command: ["java", "-jar", "/api-gateway-0.0.1-SNAPSHOT.jar"]
     restart: on-failure
+    expose: 
+      - "8888"
     ports:
       - "8888:8888"
     networks:
@@ -156,31 +149,33 @@ services:
   song-service:
     build:
       context: ./song_service
-    hostname: song-service
+    hostname: song_service
     environment:
-      - SPRING_APPLICATION_NAME=song-service
-      - SPRING_PROFILES_ACTIVE=development
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://metadata:5432/metadata
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
     command: ["java", "-jar", "/song_service-1.0-SNAPSHOT.jar"]
     ports:
       - "8081:8081"
     networks:
       microservice-net:
         aliases:
-          - song-service
+          - song_service
     depends_on:
       eureka-server:
         condition: service_started
       config-server:
         condition: service_healthy
-    #restart: on-failure
+    restart: on-failure
     
   resource-service:
     build:
       context: ./resource_service
     hostname: resource-service
     environment:
-      - SPRING_APPLICATION_NAME=resource-service
-      - SPRING_PROFILES_ACTIVE=development
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://resources:5432/resources
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
     command: ["java", "-jar", "/resource_service-1.0-SNAPSHOT.jar"]
     ports:
       - "8080:8080"
@@ -195,20 +190,17 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
-    #restart: on-failure
+    restart: on-failure
 
   resource-processor:
     build:
       context: ./resource_processor
     hostname: resource-processor
-    environment:
-      - SPRING_APPLICATION_NAME=resource-processor
-      - SPRING_PROFILES_ACTIVE=development
     command: ["java", "-jar", "/resource_processor-1.0-SNAPSHOT.jar"]
     ports:
       - "8082:8082"
     networks:
-      microservice-net:
+       microservice-net:
         aliases:
           - resource_processor
     depends_on:

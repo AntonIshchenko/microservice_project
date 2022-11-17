@@ -1,9 +1,12 @@
 package org.resource.service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
@@ -17,8 +20,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @Service
@@ -53,6 +59,7 @@ public class ResourceService {
       AmazonS3 amazonS3 = AmazonS3ClientBuilder
             .standard()
             .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(storageUrl, STORAGE_REGION))
+            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("awsAccessKey", "awsSecretKey")))
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
@@ -62,6 +69,22 @@ public class ResourceService {
       if (!awsService.doesBucketExist(bucketName)) {
          awsService.createBucket(bucketName);
       }
+   }
+
+   public String echo() {
+      String result = storageUrl + "\n" + bucketName + "\n";
+      List<Bucket> buckets = awsService.listBuckets();
+      for (Bucket bucket : buckets) {
+         result += bucket.getName() + "\n";
+      }
+      ListenableFuture<SendResult<String, String>> sendResultListenableFuture = sendMessage(new BinaryResourceModel());
+      try {
+         result += sendResultListenableFuture.get().getProducerRecord().value();
+      } catch (InterruptedException | ExecutionException e) {
+         System.err.println(e.getMessage());
+      }
+
+      return result;
    }
 
    @SneakyThrows
@@ -154,10 +177,10 @@ public class ResourceService {
    }
 
    @SneakyThrows
-   private void sendMessage(BinaryResourceModel model) {
+   private ListenableFuture<SendResult<String, String>> sendMessage(BinaryResourceModel model) {
       String messageKey = model.getClass().getSimpleName() + "|" + model.getName();
       String messageValue = objectMapper.writeValueAsString(model);
-      kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
+      return kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
    }
 
    private void clearBucket() {

@@ -1,5 +1,4 @@
 spring:
-  application.name: resource-processor
 
   kafka:
     bootstrap-servers: broker:9092
@@ -23,5 +22,8 @@ eureka:
     fetchRegistry: true
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
+      
+s3.storage.url: http://localstack:4566
+s3.storage.bucket.name: songs-bucket
 
 management.endpoints.web.exposure.include: '*'

@@ -24,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -56,11 +58,11 @@ class ResourceServiceTest {
    public static final String BAD_REQUEST = "400 BAD_REQUEST \"Invalid range\"";
    public static final String INTERNAL_SERVER_ERROR = "500 INTERNAL_SERVER_ERROR \"Internal server error occurred.\"";
    public static final String RESOURCE_NOT_FOUND = "404 NOT_FOUND \"Resource doesn’t exist with given id\"";
-   public static final List<Integer> VALID_RANGE = List.of(1, 2);
-   public static final List<Integer> INVALID_RANGE = List.of(2, 1);
-   public static final List<Integer> INVALID_SIZE_RANGE = List.of(2, 1, 3);
+   public static final List<Integer> VALID_RANGE = Arrays.asList(1, 2);
+   public static final List<Integer> INVALID_RANGE = Arrays.asList(2, 1);
+   public static final List<Integer> INVALID_SIZE_RANGE = Arrays.asList(2, 1, 3);
    public static final Long ID = 1L;
-   public static final List<Long> IDS = List.of(1L, 2L);
+   public static final List<Long> IDS = Arrays.asList(1L, 2L);
    public static final BinaryResourceModel RESOURCE_MODEL = new BinaryResourceModel(ID, FILE_NAME, RequestMethod.POST);
 
    @BeforeEach
@@ -92,7 +94,7 @@ class ResourceServiceTest {
       ObjectListing objectListing = mock(ObjectListing.class);
       lenient().when(awsService.listObjects(null)).thenReturn(objectListing);
       S3ObjectSummary s3ObjectSummary = mock(S3ObjectSummary.class);
-      lenient().when(objectListing.getObjectSummaries()).thenReturn(List.of(s3ObjectSummary));
+      lenient().when(objectListing.getObjectSummaries()).thenReturn(Collections.singletonList(s3ObjectSummary));
       lenient().when(s3ObjectSummary.getKey()).thenReturn(FILE_NAME);
 
       lenient().when(objectMapper.writeValueAsString(RESOURCE_MODEL)).thenReturn("message");
@@ -199,7 +201,7 @@ class ResourceServiceTest {
       S3Object s3Object = mock(S3Object.class);
       when(uploadedContentRepository.getBinaryResourceModelByResourceId(ID)).thenReturn(RESOURCE_MODEL);
       when(s3Object.getObjectContent()).thenReturn(s3ObjectInputStream);
-      when(s3ObjectInputStream.readNBytes(new byte[1], 0, 1)).thenReturn(0);
+      when(s3ObjectInputStream.read(new byte[1], 0, 1)).thenReturn(0);
       when(awsService.getObject(null, "file_name")).thenReturn(s3Object);
 
       ResponseEntity<byte[]> audioBinaryDataWithRange = resourceService.getAudioBinaryDataWithRange(ID, VALID_RANGE);

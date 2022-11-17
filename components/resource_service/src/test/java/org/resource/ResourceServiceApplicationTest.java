@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,7 +31,7 @@ class ResourceServiceApplicationTest {
       int audioBinaryData = resourceController.getAudioBinaryData(resourceId, Collections.emptyList());
       assertEquals(multipartFile.getBytes().length, audioBinaryData);
 
-      List<Long> longs = resourceController.deleteSongs(List.of(resourceId));
+      List<Long> longs = resourceController.deleteSongs(Collections.singletonList(resourceId));
       assertEquals(resourceId, longs.get(0));
 
    }

@@ -31,6 +31,11 @@ public class ResourceController {
    @Autowired
    private ResourceService resourceService;
 
+   @GetMapping(path = "/echo", produces = "application/json")
+   public String echo() {
+      return resourceService.echo();
+   }
+
    @PostMapping(path = "/resources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public Long uploadNewResource(@RequestPart MultipartFile data) {
       if (data.getContentType() == null || MEDIA_TYPE.compareToIgnoreCase(data.getContentType()) != 0)

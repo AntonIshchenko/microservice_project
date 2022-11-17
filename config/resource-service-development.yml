@@ -1,5 +1,19 @@
 spring:
-  application.name: resource-service
+  datasource:
+    url: jdbc:postgresql://resources:5432/resources
+    username: user
+    password: password
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
 
   kafka:
     bootstrap-servers: broker:9092
@@ -17,12 +31,14 @@ logging:
 
 eureka:
   instance:
-    #    hostname: search
     preferIpAddress: true
   client:
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
+
+s3.storage.url: http://localstack:4566
+s3.storage.bucket.name: songs-bucket
 
 management.endpoints.web.exposure.include: '*'

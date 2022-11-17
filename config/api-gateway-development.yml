@@ -2,23 +2,20 @@ server:
   port: 8888
 
 spring:
-  application:
-    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: resource-service
+          uri:
+            lb://resource-service
+          predicates:
+            - Path=/resources/**
 
-cloud:
-  gateway:
-    routes:
-      - id: resource-service
-        uri:
-          lb://resource-service
-        predicates:
-          - Path=/resources/**
-
-      - id: song-service
-        uri:
-          lb://song-service
-        predicates:
-          - Path=/songs/**
+        - id: song-service
+          uri:
+            lb://song-service
+          predicates:
+            - Path=/songs/**
 
 eureka:
   instance:

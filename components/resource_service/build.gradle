@@ -5,6 +5,7 @@ plugins {
 }
 group 'org.resource'
 version '1.0-SNAPSHOT'
+sourceCompatibility = '11'
 
 configurations {
     compileOnly {

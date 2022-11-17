@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,7 +38,7 @@ class ResourceControllerTest {
    public static final String VALIDATION_EXCEPTION = "400 BAD_REQUEST \"Validation error or request body is an invalid MP3\"";
    public static final List<Long> IDS = Collections.singletonList(1L);
    public static final Long ID = 1L;
-   public static final List<Integer> RANGE = List.of(1, 2);
+   public static final List<Integer> RANGE = Arrays.asList(1, 2);
    public static final byte[] BYTES = { 1, 2, 3 };
    public static final S3ObjectInputStream S_3_OBJECT_INPUT_STREAM = mock(S3ObjectInputStream.class);
 
@@ -85,7 +87,7 @@ class ResourceControllerTest {
 
    @Test
    void getAudioBinaryData_whenRangeNotProvidedAndValidData_thenDataLengthReturned() throws IOException {
-      when(S_3_OBJECT_INPUT_STREAM.readAllBytes()).thenReturn(BYTES);
+      when(S_3_OBJECT_INPUT_STREAM.getDelegateStream()).thenReturn(new ByteArrayInputStream(BYTES));
       when(resourceService.getAudioBinaryData(ID)).thenReturn(S_3_OBJECT_INPUT_STREAM);
 
       int audioBinaryDataLength = resourceController.getAudioBinaryData(ID, emptyList());

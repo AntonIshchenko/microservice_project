@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -51,7 +52,7 @@ class ResourceServiceContractTest {
             .build();
 
       HttpResponse postResponse = HttpClientBuilder.create().build().execute(postRequest);
-      byte[] postResponseData = postResponse.getEntity().getContent().readAllBytes();
+      byte[] postResponseData = toByteArray(postResponse.getEntity().getContent());
       System.err.println(new String(postResponseData, StandardCharsets.UTF_8));
       String postResponseResult = new String(postResponseData, StandardCharsets.UTF_8);
       Long id = Long.parseLong(postResponseResult);
@@ -62,7 +63,7 @@ class ResourceServiceContractTest {
             .build();
       HttpResponse getResponse = HttpClientBuilder.create().build().execute(getRequest);
 
-      byte[] getResponseData = getResponse.getEntity().getContent().readAllBytes();
+      byte[] getResponseData = toByteArray(getResponse.getEntity().getContent());
       System.err.println(new String(getResponseData, StandardCharsets.UTF_8));
 
       HttpUriRequest deleteRequest = RequestBuilder.delete()
@@ -71,7 +72,7 @@ class ResourceServiceContractTest {
             .build();
       HttpResponse deleteResponse = HttpClientBuilder.create().build().execute(deleteRequest);
 
-      byte[] deleteResponseData = deleteResponse.getEntity().getContent().readAllBytes();
+      byte[] deleteResponseData = toByteArray(deleteResponse.getEntity().getContent());
       String deleteResponseResult = new String(deleteResponseData, StandardCharsets.UTF_8);
       System.err.println(new String(deleteResponseData, StandardCharsets.UTF_8));
 
