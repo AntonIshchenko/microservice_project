@@ -12,6 +12,11 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -20,6 +25,7 @@ import org.apache.tika.parser.mp3.Mp3Parser;
 import org.example.model.MetadataModeDTO;
 import org.example.model.ResourceServiceMessage;
 import org.example.model.SongMetadataModel;
+import org.example.model.StorageObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -36,6 +42,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -47,8 +54,8 @@ public class ResourceProcessorService {
 
    @Value("${s3.storage.url}")
    private String storageUrl;
-   @Value("${s3.storage.bucket.name}")
-   private String bucketName;
+   @Value("${storage.service.url}")
+   private String storageServiceUrl;
 
    private final KafkaTemplate<String, String> kafkaTemplate;
    private final ObjectMapper objectMapper;
@@ -63,15 +70,10 @@ public class ResourceProcessorService {
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
-
-      //creating a bucket
-      if (!awsService.doesBucketExist(bucketName)) {
-         awsService.createBucket(bucketName);
-      }
    }
 
    public String echo() {
-      String result = storageUrl + "\n" + bucketName + "\n";
+      String result = storageUrl + "\n" + "\n";
       List<Bucket> buckets = awsService.listBuckets();
       for (Bucket bucket : buckets) {
          result += bucket.getName() + "\n";
@@ -89,7 +91,8 @@ public class ResourceProcessorService {
    @SneakyThrows
    @Transactional
    public void sendMetadata(ResourceServiceMessage model) {
-      S3Object s3Object = awsService.getObject(bucketName, model.getName());
+      StorageObject storageByType = getStorageByType(model.getStorageType());
+      S3Object s3Object = awsService.getObject(storageByType.getBucket(), model.getName());
       S3ObjectInputStream objectContent = s3Object.getObjectContent();
       InputStream dataStream = objectContent.getDelegateStream();
       SongMetadataModel resultModel = retrieveMP3Metadata(model.getName(), dataStream);
@@ -152,6 +155,20 @@ public class ResourceProcessorService {
       int minutes = duration / (60);
       int seconds = duration % 60;
       return String.format("%d:%02d", minutes, seconds);
+   }
+
+   @SneakyThrows
+   private StorageObject getStorageByType(String storageType) {
+      HttpUriRequest postRequest = RequestBuilder.get()
+            .setUri(storageServiceUrl)
+            .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .addParameter("storageType", storageType)
+            .build();
+      HttpResponse postResponse = HttpClientBuilder.create().build().execute(postRequest);
+
+      String response = new String(postResponse.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
+      StorageObject storageObject = objectMapper.readValue(response, StorageObject.class);
+      return storageObject;
    }
 
 }

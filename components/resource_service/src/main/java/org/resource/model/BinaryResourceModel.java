@@ -26,8 +26,10 @@ public class BinaryResourceModel {
 
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
+   private long id;
    private long resourceId;
    private String name;
+   private String storageType;
    private RequestMethod method;
 
    @Override

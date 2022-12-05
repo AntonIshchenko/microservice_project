@@ -13,7 +13,15 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.resource.model.BinaryResourceModel;
+import org.resource.model.SongMetadataModel;
+import org.resource.model.StorageObject;
+import org.resource.model.StorageType;
 import org.resource.repository.UploadedContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,10 +38,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityNotFoundException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
@@ -44,8 +56,8 @@ public class ResourceService {
 
    @Value("${s3.storage.url}")
    private String storageUrl;
-   @Value("${s3.storage.bucket.name}")
-   private String bucketName;
+   @Value("${storage.service.url}")
+   private String storageServiceUrl;
 
    private AWSS3Service awsService;
    private final KafkaTemplate<String, String> kafkaTemplate;
@@ -63,16 +75,10 @@ public class ResourceService {
             .withPathStyleAccessEnabled(true)
             .build();
       awsService = new AWSS3Service(amazonS3);
-
-      //      clearBucket(); // remove comment to clear bucket
-      //creating a bucket
-      if (!awsService.doesBucketExist(bucketName)) {
-         awsService.createBucket(bucketName);
-      }
    }
 
    public String echo() {
-      String result = storageUrl + "\n" + bucketName + "\n";
+      String result = storageUrl + "\n" + "\n";
       List<Bucket> buckets = awsService.listBuckets();
       for (Bucket bucket : buckets) {
          result += bucket.getName() + "\n";
@@ -91,9 +97,11 @@ public class ResourceService {
    @Transactional
    public Long uploadNewResource(MultipartFile data) {
 
-      BinaryResourceModel resourceModel = new BinaryResourceModel(0, data.getOriginalFilename(), RequestMethod.POST);
+      long resourceId = System.currentTimeMillis();
+
+      BinaryResourceModel resourceModel = new BinaryResourceModel(0, resourceId, data.getOriginalFilename(), StorageType.STAGING.name(), RequestMethod.POST);
       BinaryResourceModel ifExist = uploadedContentRepository.getBinaryResourceModelByName(data.getOriginalFilename());
-      if (ifExist != null) {
+      if (ifExist != null && !Objects.equals(ifExist.getStorageType(), StorageType.STAGING.name())) {
          resourceModel.setResourceId(ifExist.getResourceId());
          sendMessage(resourceModel);
          return ifExist.getResourceId();
@@ -101,19 +109,20 @@ public class ResourceService {
 
       BinaryResourceModel model = uploadedContentRepository.save(resourceModel);
 
-      if (!uploadDataToBucket(data.getOriginalFilename(), data.getInputStream())) {
+      if (!uploadDataToBucket(data.getOriginalFilename(), data.getInputStream(), StorageType.STAGING)) {
          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error occurred.");
       }
       sendMessage(model);
       return model.getResourceId();
    }
 
-   public S3ObjectInputStream getAudioBinaryData(Long id) {
+   public S3ObjectInputStream getAudioBinaryData(Long id, StorageType storageType) {
+      StorageObject storage = getStorageByType(storageType);
       try {
          BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
          if (model == null)
             throw new IOException();
-         S3ObjectInputStream dataFromBucket = getDataFromBucket(model);
+         S3ObjectInputStream dataFromBucket = getDataFromBucket(model, storage);
          model.setMethod(RequestMethod.GET);
          sendMessage(model);
          return dataFromBucket;
@@ -122,12 +131,17 @@ public class ResourceService {
       }
    }
 
+   public BinaryResourceModel getResourceModelByID(Long id) {
+      return uploadedContentRepository.getBinaryResourceModelByResourceId(id);
+   }
+
    @Transactional
-   public List<Long> deleteSongs(List<Long> id) {
+   public List<Long> deleteSongs(List<Long> id, StorageType storageType) {
+      StorageObject storage = getStorageByType(storageType);
       for (Long e : id) {
          BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(e);
          uploadedContentRepository.deleteBinaryResourceModelByResourceId(model.getResourceId());
-         deleteDataFromBucket(model.getName());
+         deleteDataFromBucket(model.getName(), storage);
          model.setMethod(RequestMethod.DELETE);
          sendMessage(model);
       }
@@ -135,7 +149,7 @@ public class ResourceService {
       return id;
    }
 
-   public ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range) {
+   public ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range, StorageType storageType) {
       if (range.size() != 2)
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
 
@@ -144,7 +158,7 @@ public class ResourceService {
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid range");
 
       byte[] result = new byte[length];
-      S3ObjectInputStream audioBinaryData = getAudioBinaryData(id);
+      S3ObjectInputStream audioBinaryData = getAudioBinaryData(id, storageType);
 
       try {
          audioBinaryData.skip(range.get(0));
@@ -156,24 +170,26 @@ public class ResourceService {
       return new ResponseEntity<>(result, HttpStatus.PARTIAL_CONTENT);
    }
 
-   private boolean uploadDataToBucket(String key, InputStream data) {
+   private boolean uploadDataToBucket(String key, InputStream data, StorageType storageType) {
       List<String> keys = new ArrayList<>();
 
-      awsService.listObjects(bucketName).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      StorageObject storage = getStorageByType(storageType);
+
+      awsService.listObjects(storage.getBucket()).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
       if (keys.contains(key)) {
          return true;
       }
-      PutObjectResult putObjectResult = awsService.putObject(bucketName, key, data);
+      PutObjectResult putObjectResult = awsService.putObject(storage.getBucket(), key, data);
       return putObjectResult.getETag() != null;
    }
 
-   private S3ObjectInputStream getDataFromBucket(BinaryResourceModel resourceModel) {
-      S3Object s3Object = awsService.getObject(bucketName, resourceModel.getName());
+   private S3ObjectInputStream getDataFromBucket(BinaryResourceModel resourceModel, StorageObject storageObject) {
+      S3Object s3Object = awsService.getObject(storageObject.getBucket(), resourceModel.getName());
       return s3Object.getObjectContent();
    }
 
-   private void deleteDataFromBucket(String key) {
-      awsService.deleteObject(bucketName, key);
+   private void deleteDataFromBucket(String key, StorageObject storageObject) {
+      awsService.deleteObject(storageObject.getBucket(), key);
    }
 
    @SneakyThrows
@@ -183,10 +199,73 @@ public class ResourceService {
       return kafkaTemplate.send("resource-service.entityJson", messageKey, messageValue);
    }
 
-   private void clearBucket() {
-      List<String> keys = new ArrayList<>();
-      awsService.listObjects(bucketName).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
-      keys.forEach(e -> awsService.deleteObject(bucketName, e));
+   @SneakyThrows
+   private StorageObject getStorageByType(StorageType storageType) {
+      HttpUriRequest postRequest = RequestBuilder.get()
+            .setUri(storageServiceUrl)
+            .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .addParameter("storageType", storageType.name())
+            .build();
+      HttpResponse postResponse = HttpClientBuilder.create().build().execute(postRequest);
+
+      String response = new String(postResponse.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
+      StorageObject storageObject = objectMapper.readValue(response, StorageObject.class);
+      return storageObject;
    }
 
+   private void clearBucket(StorageObject storageObject) {
+      List<String> keys = new ArrayList<>();
+      awsService.listObjects(storageObject.getBucket()).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      keys.forEach(e -> awsService.deleteObject(storageObject.getBucket(), e));
+   }
+
+   public SongMetadataModel getDTO(String inputJson) {
+      try {
+         return objectMapper.readValue(inputJson, SongMetadataModel.class);
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return new SongMetadataModel();
+      }
+   }
+
+//   @SneakyThrows
+   @Transactional
+   public BinaryResourceModel transferFormStagingToPermanent(String value) {
+      SongMetadataModel metadata = getDTO(value);
+      Long resourceId = metadata.getResourceId();
+      StorageObject stagingStorage = getStorageByType(StorageType.STAGING);
+
+      BinaryResourceModel binaryResourceModel = uploadedContentRepository.getBinaryResourceModelByResourceId(resourceId);
+      S3ObjectInputStream audioBinaryData;
+      try {
+         audioBinaryData = getDataFromBucket(binaryResourceModel, stagingStorage);
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return binaryResourceModel;
+      }
+
+      byte[] bytes = new byte[0];
+      try {
+         bytes = audioBinaryData.getDelegateStream().readAllBytes();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+      InputStream stream = new ByteArrayInputStream(bytes);
+      uploadDataToBucket(binaryResourceModel.getName(), stream, StorageType.PERMANENT);
+
+      deleteDataFromBucket(binaryResourceModel.getName(), stagingStorage);
+
+      uploadedContentRepository.deleteBinaryResourceModelByResourceId(resourceId);
+      return binaryResourceModel;
+   }
+
+   @Transactional
+   public void saveUpdatedStorageType(BinaryResourceModel binaryResourceModel) {
+      binaryResourceModel.setStorageType(StorageType.PERMANENT.name());
+      try {
+         uploadedContentRepository.save(binaryResourceModel);
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+      }
+   }
 }

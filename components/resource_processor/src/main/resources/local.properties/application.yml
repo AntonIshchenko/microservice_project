@@ -1,7 +1,7 @@
 spring:
 
   kafka:
-    bootstrap-servers: broker:9092
+    bootstrap-servers: localhost:9092
 
 server.port: 8082
 
@@ -21,12 +21,12 @@ eureka:
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
       
-s3.storage.url: http://localstack:4566
+s3.storage.url: http://localhost:4566
 
 storage:
   service:
-    url: http://storage-service:8085/storages/type
+    url: http://localhost:8085/storages/type
 
 management.endpoints.web.exposure.include: '*'

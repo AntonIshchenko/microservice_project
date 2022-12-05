@@ -44,6 +44,21 @@ services:
       microservice-net:
         aliases:
           - resources
+          
+  storages:
+    container_name: postgres-storages
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=storages
+      - PGDATA=/data/postgres
+    ports:
+      - "5466:5432"
+    networks:
+      microservice-net:
+        aliases:
+          - storages
     
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
@@ -67,7 +82,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -210,6 +225,30 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
+
+  storage-service:
+    build:
+      context: ./storage-service
+    hostname: storage-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://storages:5432/storages
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    command: ["java", "-jar", "/storage-service-1.0-SNAPSHOT.jar"]
+    ports:
+      - "8085:8085"
+    networks:
+      microservice-net:
+        aliases:
+          - storage-service
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    restart: on-failure
 
 networks:
   microservice-net:

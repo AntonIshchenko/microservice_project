@@ -4,13 +4,14 @@ import com.example.storageservice.model.StorageObject;
 import com.example.storageservice.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -21,18 +22,34 @@ public class StorageController {
    private StorageService storageService;
 
    @PostMapping(path = "/storages")
-   public Long createNewStorage(StorageObject storageObject) {
-      return 0L;
+   public Long createNewStorage(@RequestBody StorageObject storageObject) {
+      return storageService.createNewStorage(storageObject);
    }
 
    @GetMapping(path = "/storages")
    public List<StorageObject> getAllStorages() {
-      return Collections.singletonList(new StorageObject());
+      return storageService.getAllStorages();
    }
 
    @DeleteMapping(path = "/storages")
    public List<Long> deleteStorages(@RequestParam List<Long> id) {
-      return Collections.singletonList(1L);
+      return storageService.deleteStorages(id);
+   }
+
+   @GetMapping(path = "/storages/type")
+   public StorageObject getStorageByType(@RequestParam String storageType) {
+      return storageService.getStorageByType(storageType);
+   }
+
+   @KafkaListener(id = "entityJSONListener",
+         containerFactory = "jsonEntityConsumerFactory",
+         topics = "storage-service.entityJson",
+         groupId = "search.entity-json-consumer")
+   public void handleMessage(String value) {
+      StorageObject messageObject = storageService.getStorageObjectFromMessage(value);
+      StorageObject storageByType = storageService.getStorageByType(messageObject.getStorageType());
+      storageService.sendMessage(storageByType);
+      System.err.println(value);
    }
 
 }

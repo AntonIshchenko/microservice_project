@@ -1,11 +1,16 @@
 package org.example.serivice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.example.model.SongMetadataModel;
 import org.example.repository.SongModelRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -14,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SongService {
 
+   private final KafkaTemplate<String, String> kafkaTemplate;
+   private final ObjectMapper objectMapper;
    private final SongModelRepository songModelRepository;
 
    public Long createNewSongMetadata(SongMetadataModel model) {
@@ -21,6 +28,7 @@ public class SongService {
          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation error missing metadata");
       }
       songModelRepository.save(model);
+      sendMessage(model);
       return model.getResourceId();
    }
 
@@ -42,6 +50,13 @@ public class SongService {
          songModelRepository.deleteById(model.getId());
       }
       return id;
+   }
+
+   @SneakyThrows
+   private ListenableFuture<SendResult<String, String>> sendMessage(SongMetadataModel model) {
+      String messageKey = model.getClass().getSimpleName() + "|" + model.getName();
+      String messageValue = objectMapper.writeValueAsString(model);
+      return kafkaTemplate.send("storage-transfer-to-permanent.entityJson", messageKey, messageValue);
    }
 
 }

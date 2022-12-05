@@ -1,20 +1,21 @@
 package org.example.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.bind.annotation.RequestMethod;
 
+@Builder
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResourceServiceMessage {
+public class StorageObject {
 
-   private long resourceId;
-   private String name;
+   private long id;
    private String storageType;
-   private RequestMethod method;
+   private String bucket;
+   private String path;
 
 }

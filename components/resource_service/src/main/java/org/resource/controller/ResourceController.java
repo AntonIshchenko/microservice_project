@@ -2,14 +2,19 @@ package org.resource.controller;
 
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import lombok.RequiredArgsConstructor;
+import org.resource.model.BinaryResourceModel;
+import org.resource.model.SongMetadataModel;
+import org.resource.model.StorageType;
 import org.resource.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,10 +51,10 @@ public class ResourceController {
    @GetMapping(path = "/resources/{id}", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public int getAudioBinaryData(@PathVariable Long id, @RequestParam(required = false, defaultValue = "") List<Integer> range) {
       if (range != null && !range.isEmpty())
-         return Objects.requireNonNull(resourceService.getAudioBinaryDataWithRange(id, range).getBody()).length;
+         return Objects.requireNonNull(resourceService.getAudioBinaryDataWithRange(id, range, StorageType.PERMANENT).getBody()).length;
 
       try {
-         S3ObjectInputStream audioBinaryData = resourceService.getAudioBinaryData(id);
+         S3ObjectInputStream audioBinaryData = resourceService.getAudioBinaryData(id, StorageType.PERMANENT);
          byte[] bytes = toByteArray(audioBinaryData.getDelegateStream());
          return bytes.length;
       } catch (IOException e) {
@@ -57,9 +62,24 @@ public class ResourceController {
       }
    }
 
-   @DeleteMapping(path = "/resources", produces = "application/json")
-   public List<Long> deleteSongs(@RequestParam List<Long> id) {
-      return resourceService.deleteSongs(id);
+   @GetMapping(path = "/resources/model/{id}")
+   public BinaryResourceModel getModelById(@PathVariable Long id) {
+      return resourceService.getResourceModelByID(id);
    }
 
+
+   @DeleteMapping(path = "/resources", produces = "application/json")
+   public List<Long> deleteSongs(@RequestParam List<Long> id) {
+      return resourceService.deleteSongs(id, StorageType.PERMANENT);
+   }
+
+   @KafkaListener(id = "entityJSONListener",
+         containerFactory = "jsonEntityConsumerFactory",
+         topics = "storage-transfer-to-permanent.entityJson",
+         groupId = "search.entity-json-consumer")
+   public void handleMessage(String value) {
+      BinaryResourceModel binaryResourceModel = resourceService.transferFormStagingToPermanent(value);
+      resourceService.saveUpdatedStorageType(binaryResourceModel);
+      System.err.println(binaryResourceModel);
+   }
 }
