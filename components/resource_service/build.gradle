@@ -30,6 +30,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     implementation 'org.springframework.cloud:spring-cloud-starter'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
