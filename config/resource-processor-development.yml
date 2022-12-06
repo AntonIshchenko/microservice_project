@@ -28,8 +28,3 @@ s3.storage.url: http://localstack:4566
 storage:
   service:
     url: http://storage-service:8085/storages/type
-
-management.endpoints.web.exposure.include: '*'
-management.endpoint.metrics.enabled: true
-management.endpoint.prometheus.enabled: true
-management.metrics.export.prometheus.enabled: true
