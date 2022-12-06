@@ -51,7 +51,7 @@ public class StorageService {
       awsService = new AWSS3Service(amazonS3);
 
       //creating a bucket
-      deleteAllBuckets(); /// for test
+//      deleteAllBuckets(); /// for test
 
       StorageObject defaultStagingStorage = new StorageObject(0, StorageType.STAGING.name(), "staging-bucket", "staging/staging-bucket");
       StorageObject defaultPermanentStorage = new StorageObject(0, StorageType.PERMANENT.name(), "permanent-bucket", "permanent/permanent-bucket");

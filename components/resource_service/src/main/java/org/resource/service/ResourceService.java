@@ -45,7 +45,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
@@ -228,7 +227,6 @@ public class ResourceService {
       }
    }
 
-//   @SneakyThrows
    @Transactional
    public BinaryResourceModel transferFormStagingToPermanent(String value) {
       SongMetadataModel metadata = getDTO(value);
@@ -255,17 +253,9 @@ public class ResourceService {
 
       deleteDataFromBucket(binaryResourceModel.getName(), stagingStorage);
 
-      uploadedContentRepository.deleteBinaryResourceModelByResourceId(resourceId);
+      binaryResourceModel.setStorageType(StorageType.PERMANENT.name());
+
       return binaryResourceModel;
    }
 
-   @Transactional
-   public void saveUpdatedStorageType(BinaryResourceModel binaryResourceModel) {
-      binaryResourceModel.setStorageType(StorageType.PERMANENT.name());
-      try {
-         uploadedContentRepository.save(binaryResourceModel);
-      } catch (Exception e) {
-         System.err.println(e.getMessage());
-      }
-   }
 }
