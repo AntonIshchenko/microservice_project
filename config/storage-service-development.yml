@@ -27,16 +27,3 @@ eureka:
       defaultZone: http://eureka-server:8761/eureka/
 
 s3.storage.url: http://localstack:4566
-
-management:
-    endpoint:
-        metrics:
-            enabled: true
-            export: 
-                prometheus: 
-                    enabled: true
-        web: 
-            exposure: 
-                include: *
-        prometheus: 
-            enabled: true
