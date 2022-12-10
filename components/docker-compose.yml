@@ -100,8 +100,9 @@ services:
     ports:
       - '4566-4583:4566-4583'
     volumes:
-      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+#      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
     networks:
       microservice-net:
         aliases:
@@ -175,7 +176,7 @@ services:
     networks:
       microservice-net:
         aliases:
-          - song_service
+          - song-service
     depends_on:
       eureka-server:
         condition: service_started
@@ -217,7 +218,7 @@ services:
     networks:
        microservice-net:
         aliases:
-          - resource_processor
+          - resource-processor
     depends_on:
       eureka-server:
         condition: service_started
@@ -249,6 +250,55 @@ services:
       localstack:
         condition: service_healthy
     restart: on-failure
+    
+  prometheus:
+    image: prom/prometheus:v2.36.2
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+#      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+#    links:
+#      - cadvisor:cadvisor
+#      - alertmanager:alertmanager
+#      - pushgateway:pushgateway
+    depends_on:
+      - storage-service
+      - resource-processor
+      - resource-service
+      - song-service
+    networks:
+      microservice-net:
+        aliases:
+          - prometheus
+    restart: always
+#    deploy:
+#      placement:
+#        constraints:
+#          - node.hostname == ${HOSTNAME}
+
+  grafana:
+    image: grafana/grafana
+    user: "472"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      #- grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    networks:
+      microservice-net:
+        aliases:
+          - grafana
+    restart: always
 
 networks:
   microservice-net:

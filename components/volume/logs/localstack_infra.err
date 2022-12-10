@@ -1,0 +1,86 @@
+SERVICES variable is ignored if EAGER_SERVICE_LOADING=0.
+2022-12-10T20:00:59.373  WARN --- [  MainThread] localstack.deprecations    : DEFAULT_REGION is deprecated (since 0.12.7) and will be removed in upcoming releases of LocalStack! LocalStack now has full multi-region support. Please remove this environment variable.
+2022-12-10T20:01:01.837  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
+2022-12-10T20:01:01.837  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
+2022-12-10T20:01:01.868  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
+2022-12-10T20:01:01.868  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
+2022-12-10T20:01:01.964  INFO --- [  MainThread] localstack.utils.bootstrap : Execution of "start_runtime_components" took 1554.05ms
+2022-12-10T20:01:20.134  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:01:50.407  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:02:21.134  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:02:51.698  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:03:03.939  INFO --- [   asgi_gw_0] localstack.services.infra  : Starting mock S3 service on http port 4566 ...
+2022-12-10T20:03:03.965  INFO --- [functhread14] l.services.motoserver      : starting moto server on http://0.0.0.0:51161
+2022-12-10T20:03:04.935  INFO --- [   asgi_gw_0] localstack.utils.bootstrap : Execution of "require" took 1026.72ms
+2022-12-10T20:03:05.964  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
+2022-12-10T20:03:06.286  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.CreateBucket => 200
+2022-12-10T20:03:06.719  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
+2022-12-10T20:03:06.767  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.CreateBucket => 200
+2022-12-10T20:03:21.908  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:03:52.050  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:04:22.153  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:04:52.270  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:05:22.399  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:05:52.539  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:06:22.671  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:06:52.792  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:07:22.892  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:07:53.019  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:08:23.152  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:08:53.291  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:09:23.461  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:09:53.633  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:10:23.768  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:10:53.891  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:11:24.011  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:11:54.129  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:12:24.287  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:12:54.409  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:13:24.529  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:13:54.633  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:14:24.745  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:14:54.848  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:15:24.972  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:15:55.102  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:16:25.217  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:16:55.355  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:17:25.492  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:17:55.632  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:18:25.740  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:18:55.851  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:19:25.994  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:19:56.127  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:20:26.265  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:20:56.427  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:21:26.556  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:21:56.669  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:22:26.798  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:22:56.916  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:23:27.005  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:23:57.126  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:24:27.276  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:24:57.383  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:25:27.510  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:25:57.648  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:26:27.773  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:26:57.887  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:27:28.012  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:27:58.168  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:28:28.318  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:28:58.421  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:29:28.551  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:29:58.661  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:30:28.777  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:30:58.887  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:31:28.999  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:31:59.185  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:32:19.343  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.ListObjects => 200
+2022-12-10T20:32:20.012  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.PutObject => 200
+2022-12-10T20:32:21.115  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetObject => 200
+2022-12-10T20:32:21.937  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.GetObject => 200
+2022-12-10T20:32:22.015  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.ListObjects => 200
+2022-12-10T20:32:22.213  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.PutObject => 200
+2022-12-10T20:32:22.336  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.DeleteObject => 204
+2022-12-10T20:32:29.339  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-10T20:32:59.466  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-10T20:33:29.664  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
