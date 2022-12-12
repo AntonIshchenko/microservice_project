@@ -1,22 +1,28 @@
 SERVICES variable is ignored if EAGER_SERVICE_LOADING=0.
-2022-12-12T23:20:54.057  WARN --- [  MainThread] localstack.deprecations    : DEFAULT_REGION is deprecated (since 0.12.7) and will be removed in upcoming releases of LocalStack! LocalStack now has full multi-region support. Please remove this environment variable.
-2022-12-12T23:20:54.636  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
-2022-12-12T23:20:54.636  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
-2022-12-12T23:20:54.660  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
-2022-12-12T23:20:54.660  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
-2022-12-12T23:21:05.285  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:21:35.373  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:22:05.947  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:22:36.561  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:23:02.349  INFO --- [functhread14] l.services.motoserver      : starting moto server on http://0.0.0.0:57165
-2022-12-12T23:23:02.353  INFO --- [   asgi_gw_0] localstack.services.infra  : Starting mock S3 service on http port 4566 ...
-2022-12-12T23:23:03.515  INFO --- [   asgi_gw_0] localstack.utils.bootstrap : Execution of "require" took 1222.78ms
-2022-12-12T23:23:04.357  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
-2022-12-12T23:23:05.089  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.CreateBucket => 200
-2022-12-12T23:23:05.663  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
-2022-12-12T23:23:05.693  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.CreateBucket => 200
-2022-12-12T23:23:07.392  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
-2022-12-12T23:23:37.667  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:24:07.867  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
-2022-12-12T23:24:38.114  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
-2022-12-12T23:25:08.285  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-12T23:28:07.899  WARN --- [  MainThread] localstack.deprecations    : DEFAULT_REGION is deprecated (since 0.12.7) and will be removed in upcoming releases of LocalStack! LocalStack now has full multi-region support. Please remove this environment variable.
+2022-12-12T23:28:09.504  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
+2022-12-12T23:28:09.504  WARN --- [-functhread5] hypercorn.error            : ASGI Framework Lifespan error, continuing without Lifespan support
+2022-12-12T23:28:09.588  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
+2022-12-12T23:28:09.588  INFO --- [-functhread5] hypercorn.error            : Running on https://0.0.0.0:4566 (CTRL + C to quit)
+2022-12-12T23:28:09.761  INFO --- [  MainThread] localstack.utils.bootstrap : Execution of "start_runtime_components" took 607.04ms
+2022-12-12T23:28:28.484  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:28:58.850  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:29:29.419  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:30:00.490  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:30:13.136  INFO --- [functhread14] l.services.motoserver      : starting moto server on http://0.0.0.0:40301
+2022-12-12T23:30:13.140  INFO --- [   asgi_gw_0] localstack.services.infra  : Starting mock S3 service on http port 4566 ...
+2022-12-12T23:30:14.134  INFO --- [   asgi_gw_0] localstack.utils.bootstrap : Execution of "require" took 1021.10ms
+2022-12-12T23:30:14.714  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
+2022-12-12T23:30:15.310  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.CreateBucket => 200
+2022-12-12T23:30:16.462  INFO --- [   asgi_gw_0] localstack.request.aws     : AWS s3.GetBucketAcl => 404 (NoSuchBucket)
+2022-12-12T23:30:16.557  INFO --- [   asgi_gw_1] localstack.request.aws     : AWS s3.CreateBucket => 200
+2022-12-12T23:30:30.842  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:31:00.987  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-12T23:31:31.124  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:32:01.277  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-12T23:32:31.454  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:33:01.606  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-12T23:33:31.775  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:34:01.935  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
+2022-12-12T23:34:32.062  INFO --- [   asgi_gw_0] localstack.request.http    : GET / => 200
+2022-12-12T23:35:02.204  INFO --- [   asgi_gw_1] localstack.request.http    : GET / => 200
