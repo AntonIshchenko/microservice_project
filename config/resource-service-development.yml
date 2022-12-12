@@ -17,6 +17,12 @@ spring:
 
   kafka:
     bootstrap-servers: broker:9092
+    
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://security-server:8008
 
 server.port: 8080
 
@@ -38,13 +44,6 @@ eureka:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
       
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://security-server:8008
-
 s3.storage.url: http://localstack:4566
 
 storage:

@@ -19,3 +19,8 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['storage-service:8085']
+  - job_name: 'security-server'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['security-server:8008']
