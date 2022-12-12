@@ -299,6 +299,26 @@ services:
         aliases:
           - grafana
     restart: always
+    
+  security-server:
+    build:
+      context: ./security-server
+    hostname: security-server
+    command: ["java", "-jar", "/security-server-0.0.1-SNAPSHOT.jar"]
+    restart: on-failure
+    expose: 
+      - "8008"
+    ports:
+      - "8008:8008"
+    networks:
+      microservice-net:
+        aliases:
+          - security-server
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_healthy
 
 networks:
   microservice-net:
