@@ -17,12 +17,6 @@ spring:
 
   kafka:
     bootstrap-servers: broker:9092
-    
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://security-server:8008
 
 server.port: 8080
 

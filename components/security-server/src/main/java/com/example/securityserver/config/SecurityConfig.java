@@ -44,8 +44,8 @@ public class SecurityConfig {
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-            .redirectUri("http://security-server:8080/login/oauth2/code/articles-client-oidc")
-            .redirectUri("http://security-server:8080/authorized")
+            .redirectUri("http://resource-service:8080/login/oauth2/resource-service")
+            .redirectUri("http://resource-service:8080/authorized")
             .scope(OidcScopes.OPENID)
             .scope("songs.read")
             .build();
