@@ -36,7 +36,7 @@ spring:
             client-secret: secret
             authorization-grant-type: authorization_code
             #redirect-uri: "localhost:8008/login/oauth2/code/{registrationId}"
-            scope: openid
+            #scope: openid
         provider:
           spring:
             issuer-uri: http://security-server:8008
