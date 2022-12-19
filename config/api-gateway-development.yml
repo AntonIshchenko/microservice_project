@@ -33,13 +33,13 @@ spring:
           gateway:
             provider: spring
             client-id: gateway
-            client-secret: secret
+            client-secret: myClientSecretValue
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid,read
         provider:
           spring:
-            issuer-uri: http://localhost:8008
+            issuer-uri: http://security-server:8008
 
 eureka:
   instance:
