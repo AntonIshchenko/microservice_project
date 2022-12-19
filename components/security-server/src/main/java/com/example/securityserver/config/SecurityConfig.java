@@ -1,130 +1,29 @@
 package com.example.securityserver.config;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.GlobalAuthenticationConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
+@Configuration
+public class SecurityConfig extends GlobalAuthenticationConfigurerAdapter {
 
-@Configuration(proxyBeanMethods = false)
-public class SecurityConfig {
-
-   @Bean
-   @Order(Ordered.HIGHEST_PRECEDENCE)
-   public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
-      OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-      return http.formLogin(Customizer.withDefaults()).build();
+   @Override
+   public void init(AuthenticationManagerBuilder auth) throws Exception {
+      auth.inMemoryAuthentication()
+            .withUser("admin")
+            .password(passwordEncoder().encode("1234"))
+            .roles("ADMIN")
+            .and()
+            .withUser("user")
+            .password(passwordEncoder().encode("4321"))
+            .roles("USER");
    }
 
    @Bean
-   public RegisteredClientRepository registeredClientRepository() {
-      RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("client")
-            .clientSecret("secret")
-            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-            .redirectUri("http://resource-service:8080/login/oauth2/resource-service")
-            .redirectUri("http://resource-service:8080/authorized")
-            .scope(OidcScopes.OPENID)
-            .scope("songs.read")
-            .build();
-
-      return new InMemoryRegisteredClientRepository(registeredClient);
+   public BCryptPasswordEncoder passwordEncoder() {
+      return new BCryptPasswordEncoder();
    }
 
-   @Bean
-   public JWKSource<SecurityContext> jwkSource() {
-      RSAKey rsaKey = generateRsa();
-      JWKSet jwkSet = new JWKSet(rsaKey);
-      return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-   }
-
-   private static RSAKey generateRsa() {
-      KeyPair keyPair = generateRsaKey();
-      RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-      RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-      return new RSAKey.Builder(publicKey)
-            .privateKey(privateKey)
-            .keyID(UUID.randomUUID().toString())
-            .build();
-   }
-
-   private static KeyPair generateRsaKey() {
-      KeyPair keyPair;
-      try {
-         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-         keyPairGenerator.initialize(2048);
-         keyPair = keyPairGenerator.generateKeyPair();
-      } catch (Exception ex) {
-         throw new IllegalStateException(ex);
-      }
-      return keyPair;
-   }
-
-   @Bean
-   public ProviderSettings providerSettings() {
-      return ProviderSettings.builder()
-            .issuer("http://security-server:8008")
-            .build();
-   }
-
-   //   @Bean
-   //   public ProviderSettings providerSettings() {
-   //      return ProviderSettings.builder()
-   //            .issuer("http://auth-server:9000")
-   //            .build();
-   //   }
-   //   @Bean
-   //   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-   //      http
-   //            .authorizeHttpRequests((requests) -> requests
-   //                  .antMatchers("/", "/*").permitAll()
-   //                  .anyRequest().authenticated()
-   //            )
-   ////            .formLogin((form) -> form
-   ////                  .loginPage("/login")
-   ////                  .permitAll()
-   ////            )
-   //            .logout((logout) -> logout.permitAll());
-   //
-   //      return http.build();
-   //   }
-   //
-   //   @Bean
-   //   public UserDetailsService userDetailsService() {
-   //      UserDetails user =
-   //            User.withDefaultPasswordEncoder()
-   //                  .username("user")
-   //                  .password("password")
-   //                  .roles("USER")
-   //                  .build();
-   //
-   //      return new InMemoryUserDetailsManager(user);
-   //   }
-   //
-   //   @Bean
-   //   public PasswordEncoder passwordEncoder() {
-   //      return new BCryptPasswordEncoder();
-   //   }
 }

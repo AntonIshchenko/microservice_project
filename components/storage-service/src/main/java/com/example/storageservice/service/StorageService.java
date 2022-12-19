@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -75,9 +76,16 @@ public class StorageService {
    @Transactional
    public List<Long> deleteStorages(List<Long> id) {
       List<StorageObject> all = storageServiceRepository.findAll();
+      all.forEach(this::deleteObjectsInBucket);
       all.forEach(e -> awsService.deleteBucket(e.getBucket()));
       id.forEach(storageServiceRepository::deleteStorageObjectById);
       return id;
+   }
+
+   private void deleteObjectsInBucket(StorageObject storageObject) {
+      List<String> keys = new ArrayList<>();
+      awsService.listObjects(storageObject.getBucket()).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
+      keys.forEach(e -> awsService.deleteObject(storageObject.getBucket(), e));
    }
 
    public StorageObject getStorageByType(String storageType) {

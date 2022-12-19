@@ -243,6 +243,8 @@ services:
         aliases:
           - storage-service
     depends_on:
+#      security-server:
+#        condition: service_healthy
       eureka-server:
         condition: service_started
       config-server:
@@ -319,6 +321,7 @@ services:
         condition: service_started
       config-server:
         condition: service_healthy
+        
 
 networks:
   microservice-net:
