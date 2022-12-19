@@ -21,25 +21,7 @@ spring:
           uri:
             lb://storage-service
           predicates:
-            - Path=/storages/**
-          filters:
-            - TokenRelay=
-            - RemoveRequestHeader=Cookie
-            
-  security:
-    oauth2:
-      client:
-        registration:
-          gateway:
-            provider: spring
-            client-id: gateway
-            client-secret: myClientSecretValue
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid,read
-        provider:
-          spring:
-            issuer-uri: http://security-server:8008
+            - Path=/storages/**            
 
 eureka:
   instance:
