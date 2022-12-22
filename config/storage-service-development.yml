@@ -32,5 +32,11 @@ eureka:
     fetchRegistry: true
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
+      
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
 
 s3.storage.url: http://localstack:4566
