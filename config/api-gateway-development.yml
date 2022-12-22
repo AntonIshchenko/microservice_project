@@ -21,7 +21,7 @@ spring:
           uri:
             lb://storage-service
           predicates:
-            - Path=/storages/**            
+            - Path=/api/storages/**            
 
 eureka:
   instance:

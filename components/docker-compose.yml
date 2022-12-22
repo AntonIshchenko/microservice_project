@@ -1,118 +1,118 @@
 version: '3.5'
 services:
 
-  eureka-server:
-    build:
-      context: ./eureka-server
-    hostname: eureka-server
-    command: ["java", "-jar", "/eureka-server-0.0.1-SNAPSHOT.jar"]
-    expose:
-      - "8761"
-    ports:
-      - "8761:8761"
-    networks:
-      microservice-net:
-        aliases:
-          - eureka-server
-          
-  metadata:
-    container_name: postgres-metadata
-    image: postgres
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=metadata
-      - PGDATA=/data/postgres
-    ports:
-      - "5455:5432"
-    networks:
-      microservice-net:
-        aliases:
-          - metadata
-          
-  resources:
-    container_name: postgres-resources
-    image: postgres
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=resources
-      - PGDATA=/data/postgres
-    ports:
-      - "5444:5432"
-    networks:
-      microservice-net:
-        aliases:
-          - resources
-          
-  storages:
-    container_name: postgres-storages
-    image: postgres
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=storages
-      - PGDATA=/data/postgres
-    ports:
-      - "5466:5432"
-    networks:
-      microservice-net:
-        aliases:
-          - storages
-    
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      microservice-net:
-        aliases:
-          - zookeeper
-
-  broker:
-    image: confluentinc/cp-kafka:7.0.1
-    container_name: broker
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    networks:
-      microservice-net:
-        aliases:
-          - broker
-          
-  localstack:
-    image: localstack/localstack:latest
-    environment:
-      - AWS_DEFAULT_REGION=us-east-1
-      - EDGE_PORT=4566
-      - SERVICES=lambda,s3
-    ports:
-      - '4566-4583:4566-4583'
-    volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-#      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
-    networks:
-      microservice-net:
-        aliases:
-          - localstack
-    healthcheck:
-      test: curl --fail http://localstack:4566 || exit 1
-      interval: 30s
-      retries: 3
-      start_period: 20s
-      timeout: 10s
+#  eureka-server:
+#    build:
+#      context: ./eureka-server
+#    hostname: eureka-server
+#    command: ["java", "-jar", "/eureka-server-0.0.1-SNAPSHOT.jar"]
+#    expose:
+#      - "8761"
+#    ports:
+#      - "8761:8761"
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - eureka-server
+#          
+#  metadata:
+#    container_name: postgres-metadata
+#    image: postgres
+#    environment:
+#      - POSTGRES_USER=user
+#      - POSTGRES_PASSWORD=password
+#      - POSTGRES_DB=metadata
+#      - PGDATA=/data/postgres
+#    ports:
+#      - "5455:5432"
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - metadata
+#          
+#  resources:
+#    container_name: postgres-resources
+#    image: postgres
+#    environment:
+#      - POSTGRES_USER=user
+#      - POSTGRES_PASSWORD=password
+#      - POSTGRES_DB=resources
+#      - PGDATA=/data/postgres
+#    ports:
+#      - "5444:5432"
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - resources
+#          
+#  storages:
+#    container_name: postgres-storages
+#    image: postgres
+#    environment:
+#      - POSTGRES_USER=user
+#      - POSTGRES_PASSWORD=password
+#      - POSTGRES_DB=storages
+#      - PGDATA=/data/postgres
+#    ports:
+#      - "5466:5432"
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - storages
+#    
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.0.1
+#    container_name: zookeeper
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - zookeeper
+#
+#  broker:
+#    image: confluentinc/cp-kafka:7.0.1
+#    container_name: broker
+#    ports:
+#      - "9092:9092"
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - broker
+#          
+#  localstack:
+#    image: localstack/localstack:latest
+#    environment:
+#      - AWS_DEFAULT_REGION=us-east-1
+#      - EDGE_PORT=4566
+#      - SERVICES=lambda,s3
+#    ports:
+#      - '4566-4583:4566-4583'
+#    volumes:
+#      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+#      - "/var/run/docker.sock:/var/run/docker.sock"
+##      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - localstack
+#    healthcheck:
+#      test: curl --fail http://localstack:4566 || exit 1
+#      interval: 30s
+#      retries: 3
+#      start_period: 20s
+#      timeout: 10s
 
   config-server:
     build:
@@ -132,8 +132,8 @@ services:
       microservice-net:
         aliases:
           - config-server
-    depends_on:
-      - eureka-server
+#    depends_on:
+#      - eureka-server
     healthcheck:
       test: curl --fail http://config-server:8090/api-gateway/development || exit 1
       interval: 30s
@@ -156,8 +156,8 @@ services:
         aliases:
           - api-gateway
     depends_on:
-      eureka-server:
-        condition: service_started
+ #     eureka-server:
+ #       condition: service_started
       config-server:
         condition: service_healthy
 
@@ -178,8 +178,8 @@ services:
         aliases:
           - song-service
     depends_on:
-      eureka-server:
-        condition: service_started
+#      eureka-server:
+#        condition: service_started
       config-server:
         condition: service_healthy
     restart: on-failure
@@ -200,12 +200,12 @@ services:
         aliases:
           - resource-service
     depends_on:
-      eureka-server:
-        condition: service_started
+#      eureka-server:
+#        condition: service_started
       config-server:
         condition: service_healthy
-      localstack:
-        condition: service_healthy
+#      localstack:
+#        condition: service_healthy
     restart: on-failure
 
   resource-processor:
@@ -220,12 +220,12 @@ services:
         aliases:
           - resource-processor
     depends_on:
-      eureka-server:
-        condition: service_started
+#      eureka-server:
+#        condition: service_started
       config-server:
         condition: service_healthy
-      localstack:
-        condition: service_healthy
+#      localstack:
+#        condition: service_healthy
 
   storage-service:
     build:
@@ -235,6 +235,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://storages:5432/storages
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
+ #     - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI=http://host.docker.internal:8099/auth/realms/storage-service/protocol/openid-connect/certs
     command: ["java", "-jar", "/storage-service-1.0-SNAPSHOT.jar"]
     ports:
       - "8085:8085"
@@ -245,82 +246,75 @@ services:
     depends_on:
 #      security-server:
 #        condition: service_healthy
-      eureka-server:
-        condition: service_started
+#      eureka-server:
+#        condition: service_started
       config-server:
         condition: service_healthy
-      localstack:
-        condition: service_healthy
+#      localstack:
+#        condition: service_healthy
     restart: on-failure
     
-  prometheus:
-    image: prom/prometheus:v2.36.2
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-#      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    ports:
-      - 9090:9090
-#    links:
-#      - cadvisor:cadvisor
-#      - alertmanager:alertmanager
-#      - pushgateway:pushgateway
-    depends_on:
-      - storage-service
-      - resource-processor
-      - resource-service
-      - song-service
-    networks:
-      microservice-net:
-        aliases:
-          - prometheus
-    restart: always
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.hostname == ${HOSTNAME}
-
-  grafana:
-    image: grafana/grafana
-    user: "472"
-    depends_on:
-      - prometheus
-    ports:
-      - 3000:3000
-    volumes:
-      #- grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
-    env_file:
-      - ./grafana/config.monitoring
-    networks:
-      microservice-net:
-        aliases:
-          - grafana
-    restart: always
-    
-  security-server:
-    build:
-      context: ./security-server
-    hostname: security-server
-    command: ["java", "-jar", "/security-server-0.0.1-SNAPSHOT.jar"]
-    restart: on-failure
-    expose: 
-      - "8008"
-    ports:
-      - "8008:8008"
-    networks:
-      microservice-net:
-        aliases:
-          - security-server
-    depends_on:
-      eureka-server:
-        condition: service_started
-      config-server:
-        condition: service_healthy
+#  prometheus:
+#    image: prom/prometheus:v2.36.2
+#    volumes:
+#      - ./prometheus/:/etc/prometheus/
+##      - prometheus_data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+#      - '--web.console.templates=/usr/share/prometheus/consoles'
+#    ports:
+#      - 9090:9090
+##    links:
+##      - cadvisor:cadvisor
+##      - alertmanager:alertmanager
+##      - pushgateway:pushgateway
+#    depends_on:
+#      - storage-service
+#      - resource-processor
+#      - resource-service
+#      - song-service
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - prometheus
+#    restart: always
+##    deploy:
+##      placement:
+##        constraints:
+##          - node.hostname == ${HOSTNAME}
+#
+#  grafana:
+#    image: grafana/grafana
+#    user: "472"
+#    depends_on:
+#      - prometheus
+#    ports:
+#      - 3000:3000
+#    volumes:
+#      #- grafana_data:/var/lib/grafana
+#      - ./grafana/provisioning/:/etc/grafana/provisioning/
+#    env_file:
+#      - ./grafana/config.monitoring
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - grafana
+#    restart: always
+#    
+#  keycloack:
+#    image: quay.io/keycloak/keycloak:15.0.2
+#    environment:
+#      - KEYCLOAK_USER=admin
+#      - KEYCLOAK_PASSWORD=admin
+#    ports:
+#      - 8099:8080
+#    networks:
+#      microservice-net:
+#        aliases:
+#          - keycloack
+#    restart: always
         
 
 networks:

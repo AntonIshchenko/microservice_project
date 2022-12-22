@@ -22,17 +22,20 @@ public class StorageController {
    @Autowired
    private StorageService storageService;
 
-   @PostMapping(path = "/storages")
+   @PostMapping(path = "/api/storages")
+   @PreAuthorize("hasRole('ADMIN')")
    public Long createNewStorage(@RequestBody StorageObject storageObject) {
       return storageService.createNewStorage(storageObject);
    }
 
-   @GetMapping(path = "/storages")
+   @GetMapping(path = "/api/storages")
+   @PreAuthorize("hasAnyRole('USER','ADMIN')")
    public List<StorageObject> getAllStorages() {
       return storageService.getAllStorages();
    }
 
-   @DeleteMapping(path = "/storages")
+   @DeleteMapping(path = "/api/storages")
+   @PreAuthorize("hasRole('ADMIN')")
    public List<Long> deleteStorages(@RequestParam List<Long> id) {
       return storageService.deleteStorages(id);
    }

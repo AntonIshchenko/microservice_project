@@ -2,45 +2,45 @@ package com.example.storageservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-@EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-@EnableResourceServer
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+public class SecurityConfig {
 
-//   @Bean
-//   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//      http.authorizeRequests()
-//            .antMatchers(HttpMethod.GET, "/storages").hasAnyRole("USER", "ADMIN")
-//            .and().authorizeRequests()
-//            .antMatchers(HttpMethod.DELETE, "/storages").hasRole("ADMIN")
-//            .and().authorizeRequests()
-//            .antMatchers(HttpMethod.POST, "/storages").hasRole("ADMIN");
-//      return http.build();
-//   }
+   @Bean
+   SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+      JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+      jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloackRoleConverter());
 
+      http.cors().configurationSource(corsConfigurationSource())
+            .and().authorizeRequests((auth) -> auth
+                  .antMatchers("/api/**").authenticated()
+            )
+            .csrf().disable()
+            .oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtAuthenticationConverter);
+      http.headers().frameOptions().sameOrigin();
 
-   @Override
-   public void configure(WebSecurity security) throws Exception {
-      security.ignoring().antMatchers("/storages/type", "/actuator/prometheus");
+      return http.build();
    }
 
-   @Override
-   protected void configure(HttpSecurity http) throws Exception {
-      http.authorizeRequests()
-            .antMatchers(HttpMethod.GET,"/storages").hasAnyRole("USER", "ADMIN")
-            .antMatchers(HttpMethod.DELETE,"/storages").hasRole("ADMIN")
-            .antMatchers(HttpMethod.POST,"/storages").hasRole("ADMIN");
+   @Bean
+   CorsConfigurationSource corsConfigurationSource() {
+      CorsConfiguration configuration = new CorsConfiguration();
+      configuration.addAllowedOriginPattern("*");
+      configuration.addAllowedHeader("*");
+      configuration.addAllowedMethod("*");
+      configuration.setAllowCredentials(true);
+      UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+      source.registerCorsConfiguration("/**", configuration);
+      return source;
    }
+
 }
 

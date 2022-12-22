@@ -52,7 +52,7 @@ public class StorageService {
       awsService = new AWSS3Service(amazonS3);
 
       //creating a bucket
-//      deleteAllBuckets(); /// for test
+      //      deleteAllBuckets(); /// for test
 
       StorageObject defaultStagingStorage = new StorageObject(0, StorageType.STAGING.name(), "staging-bucket", "staging/staging-bucket");
       StorageObject defaultPermanentStorage = new StorageObject(0, StorageType.PERMANENT.name(), "permanent-bucket", "permanent/permanent-bucket");
@@ -65,8 +65,11 @@ public class StorageService {
       if (!awsService.doesBucketExist(storageObject.getBucket())) {
          awsService.createBucket(storageObject.getBucket());
       }
-      StorageObject saveResult = storageServiceRepository.save(storageObject);
-      return saveResult.getId();
+      StorageObject storageObjectByStorageType = storageServiceRepository.getStorageObjectByStorageType(storageObject.getStorageType());
+      if (storageObjectByStorageType == null)
+         return storageServiceRepository.save(storageObject).getId();
+      else
+         return storageObjectByStorageType.getId();
    }
 
    public List<StorageObject> getAllStorages() {
