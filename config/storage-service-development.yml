@@ -7,6 +7,13 @@ spring:
     url: jdbc:postgresql://storages:5432/storages
     username: user
     password: password
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8099/auth/realms/storage-service/protocol/openid-connect/certs
+  
 
   jpa:
     show-sql: true
