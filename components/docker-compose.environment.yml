@@ -1,0 +1,120 @@
+version: '3.5'
+services:
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+    hostname: eureka-server
+    command: ["java", "-jar", "/eureka-server-0.0.1-SNAPSHOT.jar"]
+    expose:
+      - "8761"
+    ports:
+      - "8761:8761"
+    networks:
+      microservice-net:
+        aliases:
+          - eureka-server
+          
+  metadata:
+    container_name: postgres-metadata
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=metadata
+      - PGDATA=/data/postgres
+    ports:
+      - "5455:5432"
+    networks:
+      microservice-net:
+        aliases:
+          - metadata
+          
+  resources:
+    container_name: postgres-resources
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=resources
+      - PGDATA=/data/postgres
+    ports:
+      - "5444:5432"
+    networks:
+      microservice-net:
+        aliases:
+          - resources
+          
+  storages:
+    container_name: postgres-storages
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=storages
+      - PGDATA=/data/postgres
+    ports:
+      - "5466:5432"
+    networks:
+      microservice-net:
+        aliases:
+          - storages
+    
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      microservice-net:
+        aliases:
+          - zookeeper
+
+  broker:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: broker
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      microservice-net:
+        aliases:
+          - broker
+         
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - SERVICES=lambda,s3
+    ports:
+      - '4566-4583:4566-4583'
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
+    networks:
+      microservice-net:
+        aliases:
+          - localstack
+    healthcheck:
+      test: curl --fail http://localstack:4566 || exit 1
+      interval: 30s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
+      
+networks:
+  microservice-net:
+    name: microservice-net
+    driver: bridge

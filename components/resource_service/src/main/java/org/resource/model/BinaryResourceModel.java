@@ -1,52 +1,30 @@
 package org.resource.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.web.bind.annotation.RequestMethod;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
 
 @Entity
 @Table(name = "BINARY_RESOURCE_IDS")
 @Builder
-@Setter
-@Getter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class BinaryResourceModel {
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.AUTO)
-   private long id;
-   private long resourceId;
-   private String name;
-   private String storageType;
-   private RequestMethod method;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+    private long resourceId;
+    private String name;
+    private String storageType;
+    private RequestMethod method;
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o)
-         return true;
-
-      if (!(o instanceof BinaryResourceModel))
-         return false;
-
-      BinaryResourceModel that = (BinaryResourceModel) o;
-
-      return new EqualsBuilder().append(resourceId, that.resourceId).append(name, that.name).isEquals();
-   }
-
-   @Override
-   public int hashCode() {
-      return new HashCodeBuilder(17, 37).append(resourceId).append(name).toHashCode();
-   }
 }

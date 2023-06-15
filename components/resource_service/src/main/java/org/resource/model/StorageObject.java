@@ -1,31 +1,24 @@
 package org.resource.model;
 
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import lombok.Data;
 
 @Entity
-@Table(name = "storage_objects")
+@Table(name = "STORAGE_OBJECTS")
 @Builder
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class StorageObject {
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.AUTO)
-   private long id;
-   private String storageType;
-   private String bucket;
-   private String path;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private final Long id;
+    private final String storageType;
+    private final String bucket;
+    private final String path;
 
 }
