@@ -9,7 +9,7 @@ spring:
           uri:
             lb://resource-service
           predicates:
-            - Path=/resources/**
+            - Path=/api/v1/resources/**
 
         - id: song-service
           uri:

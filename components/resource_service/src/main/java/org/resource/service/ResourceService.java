@@ -3,7 +3,6 @@ package org.resource.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,8 +45,8 @@ import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_DIFF;
 import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_FORMAT;
 import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_VALUE;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class ResourceService {
 
     private static final String MEDIA_TYPE_AUDIO_MPEG = "audio/mpeg";
@@ -103,7 +102,7 @@ public class ResourceService {
         return model.getResourceId();
     }
 
-    public S3ObjectInputStream getAudioBinaryData(Long id, StorageType storageType) {
+    private S3ObjectInputStream getAudioBinaryData(Long id, StorageType storageType) {
         try {
             return getAudioBinaryDataFromBucket(id, storageType);
         } catch (EntityNotFoundException | AmazonS3Exception e) {
@@ -115,8 +114,9 @@ public class ResourceService {
             throws EntityNotFoundException, AmazonS3Exception {
         StorageObject storage = getStorageByType(storageType);
         BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
-        if (model == null)
-            throw new EntityNotFoundException();
+        if (model == null) {
+            throw exceptionFactory.audioBinaryDataNotFound();
+        }
         S3ObjectInputStream dataFromBucket = getDataFromBucket(model, storage);
         model.setMethod(RequestMethod.GET);
         sendMessage(model);
@@ -143,7 +143,7 @@ public class ResourceService {
         sendMessage(model);
     }
 
-    public ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range, StorageType storageType) {
+    private ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range, StorageType storageType) {
         validateAudioBinaryDataRange(range);
 
         int length = range.get(1) - range.get(0);
@@ -168,17 +168,16 @@ public class ResourceService {
         }
     }
 
-    private boolean uploadDataToBucket(String key, InputStream data, StorageType storageType) {
+    private void uploadDataToBucket(String key, InputStream data, StorageType storageType) {
         List<String> keys = new ArrayList<>();
 
         StorageObject storage = getStorageByType(storageType);
 
         awsService.listObjects(storage.getBucket()).getObjectSummaries().forEach(e -> keys.add(e.getKey()));
         if (keys.contains(key)) {
-            return true;
+            return;
         }
-        PutObjectResult putObjectResult = awsService.putObject(storage.getBucket(), key, data);
-        return putObjectResult.getETag() != null;
+        awsService.putObject(storage.getBucket(), key, data);
     }
 
     private S3ObjectInputStream getDataFromBucket(BinaryResourceModel resourceModel, StorageObject storageObject) {
@@ -208,18 +207,14 @@ public class ResourceService {
                 .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .addParameter("storageType", storageType.name())
                 .build();
-        String response;
         try {
             HttpResponse postResponse = HttpClientBuilder.create().build().execute(postRequest);
-            response = new String(postResponse.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw exceptionFactory.unableToRetrieveStorageObject(e);
-        }
-
-        try {
+            String response = new String(postResponse.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
             return objectMapper.readValue(response, StorageObject.class);
         } catch (JsonProcessingException e) {
             throw exceptionFactory.unableToMapEntity(e);
+        } catch (IOException e) {
+            throw exceptionFactory.unableToRetrieveStorageObject(e);
         }
     }
 
@@ -229,7 +224,7 @@ public class ResourceService {
         keys.forEach(e -> awsService.deleteObject(storageObject.getBucket(), e));
     }
 
-    public SongMetadataModel getDTO(String inputJson) {
+    private SongMetadataModel getSongMetadataModelDTO(String inputJson) {
         try {
             return objectMapper.readValue(inputJson, SongMetadataModel.class);
         } catch (Exception e) {
@@ -239,7 +234,7 @@ public class ResourceService {
 
     @Transactional
     public void transferFormStagingToPermanent(String value) {
-        Long resourceId = getDTO(value).getResourceId();
+        Long resourceId = getSongMetadataModelDTO(value).getResourceId();
         StorageObject stagingStorage = getStorageByType(StorageType.STAGING);
 
         BinaryResourceModel binaryResourceModel = uploadedContentRepository.getBinaryResourceModelByResourceId(resourceId);
