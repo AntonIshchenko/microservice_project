@@ -10,10 +10,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +53,7 @@ public class SongService {
    }
 
    @SneakyThrows
-   private ListenableFuture<SendResult<String, String>> sendMessage(SongMetadataModel model) {
+   private CompletableFuture<SendResult<String, String>> sendMessage(SongMetadataModel model) {
       String messageKey = model.getClass().getSimpleName() + "|" + model.getName();
       String messageValue = objectMapper.writeValueAsString(model);
       return kafkaTemplate.send("storage-transfer-to-permanent.entityJson", messageKey, messageValue);

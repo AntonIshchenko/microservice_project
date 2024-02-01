@@ -1,0 +1,33 @@
+spring:
+
+  datasource:
+    url: jdbc:postgresql://localhost:5455/metadata
+    username: user
+    password: password
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server.port: 8081
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    metadata-map:
+      zone: zone1
+  client:
+    prefer-same-zone-eureka: true
+    register-with-eureka: true
+    region: region1
+    service-url:
+      zone1: http://localhost:8761/eureka/
+    availability-zones:
+      region1: zone1
+
+management.endpoints.web.exposure.include: '*'

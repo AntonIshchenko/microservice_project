@@ -1,6 +1,7 @@
 package org.resource.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.resource.model.BinaryResourceModel;
 import org.resource.model.StorageType;
 import org.resource.service.ResourceService;
@@ -36,15 +37,22 @@ public class ResourceController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public int getAudioBinaryData(@PathVariable Long id,
-                                  @RequestParam(required = false, defaultValue = "") List<Integer> range,
-                                  @RequestParam(required = false, defaultValue = "PERMANENT") StorageType storageType) {
-        return resourceService.getAudioData(id, range, storageType);
+    public List<Byte> getAudioBinaryData(@PathVariable Long id,
+                                         @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
+                                         @RequestParam(required = false, defaultValue = "128") Integer pageSize,
+                                         @RequestParam(required = false, defaultValue = "PERMANENT") StorageType storageType) {
+        return resourceService.getAudioData(id, pageNumber, pageSize, storageType);
     }
 
     @GetMapping(path = "/{id}/model")
     public BinaryResourceModel getModelById(@PathVariable Long id) {
         return resourceService.getResourceModelByID(id);
+    }
+
+    @GetMapping(path = "/model")
+    public List<BinaryResourceModel> getAllModels(@RequestParam(required = false, defaultValue = "0") Integer pageNumber,
+                                                  @RequestParam(required = false, defaultValue = "1") Integer pageSize) {
+        return resourceService.getAllResourceModels(pageNumber, pageSize);
     }
 
     @DeleteMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -9,19 +9,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.resource.exceptions.ExceptionFactory;
+import org.resource.model.BinaryDataPage;
 import org.resource.model.BinaryResourceModel;
 import org.resource.model.SongMetadataModel;
 import org.resource.model.StorageObject;
 import org.resource.model.StorageType;
 import org.resource.repository.UploadedContentRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.KafkaException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -35,15 +36,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_DIFF;
-import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_FORMAT;
-import static org.resource.exceptions.ExceptionMessage.INVALID_DATA_RANGE_VALUE;
 
 @Service
 @RequiredArgsConstructor
@@ -105,13 +102,13 @@ public class ResourceService {
     private S3ObjectInputStream getAudioBinaryData(Long id, StorageType storageType) {
         try {
             return getAudioBinaryDataFromBucket(id, storageType);
-        } catch (EntityNotFoundException | AmazonS3Exception e) {
+        } catch (EntityNotFoundException | AmazonS3Exception | IOException e) {
             throw exceptionFactory.audioBinaryDataNotFound();
         }
     }
 
     private S3ObjectInputStream getAudioBinaryDataFromBucket(Long id, StorageType storageType)
-            throws EntityNotFoundException, AmazonS3Exception {
+            throws EntityNotFoundException, AmazonS3Exception, IOException {
         StorageObject storage = getStorageByType(storageType);
         BinaryResourceModel model = uploadedContentRepository.getBinaryResourceModelByResourceId(id);
         if (model == null) {
@@ -141,31 +138,6 @@ public class ResourceService {
         deleteDataFromBucket(model.getName(), storage);
         model.setMethod(RequestMethod.DELETE);
         sendMessage(model);
-    }
-
-    private ResponseEntity<byte[]> getAudioBinaryDataWithRange(Long id, List<Integer> range, StorageType storageType) {
-        validateAudioBinaryDataRange(range);
-
-        int length = range.get(1) - range.get(0);
-        byte[] result = new byte[length];
-        S3ObjectInputStream audioBinaryData = getAudioBinaryData(id, storageType);
-        try {
-            audioBinaryData.skip(range.get(0));
-            audioBinaryData.read(result, 0, length);
-        } catch (IOException e) {
-            throw exceptionFactory.invalidDataRange(INVALID_DATA_RANGE_VALUE);
-        }
-
-        return new ResponseEntity<>(result, HttpStatus.PARTIAL_CONTENT);
-    }
-
-    private void validateAudioBinaryDataRange(List<Integer> range) {
-        if (range.size() != 2) {
-            throw exceptionFactory.invalidDataRange(INVALID_DATA_RANGE_FORMAT);
-        }
-        if (range.get(1) - range.get(0) < 0) {
-            throw exceptionFactory.invalidDataRange(INVALID_DATA_RANGE_DIFF);
-        }
     }
 
     private void uploadDataToBucket(String key, InputStream data, StorageType storageType) {
@@ -257,11 +229,16 @@ public class ResourceService {
         }
     }
 
-    public int getAudioData(Long id, List<Integer> range, StorageType storageType) {
-        if (!range.isEmpty()) {
-            return Objects.requireNonNull(getAudioBinaryDataWithRange(id, range, storageType).getBody()).length;
+    public List<Byte> getAudioData(Long id, Integer pageNumber, Integer pageSize, StorageType storageType) {
+        try {
+            List<Byte> bytes = Arrays.asList(ArrayUtils.toObject(getAudioBinaryData(id, storageType).readAllBytes()));
+            return new BinaryDataPage(bytes, PageRequest.of(pageNumber, pageSize)).getContent();
+        } catch (IOException e) {
+            throw exceptionFactory.audioBinaryDataNotFound();
         }
-        return getAudioBinaryData(id, storageType).hashCode();
     }
 
+    public List<BinaryResourceModel> getAllResourceModels(Integer pageNumber, Integer pageSize) {
+        return uploadedContentRepository.findAll(PageRequest.of(pageNumber, pageSize)).getContent();
+    }
 }
